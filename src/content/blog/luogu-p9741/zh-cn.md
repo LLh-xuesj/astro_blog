@@ -9,6 +9,7 @@ tags:
 image: "./cover.webp"
 draft: false
 slugId: alg/luogu-p9741
+railTitle: 翻转与反转
 ---
 
 ## 题目传送门

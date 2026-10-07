@@ -36,6 +36,21 @@ const { remarkPluginFrontmatter } = await render(entry);
 
 // 首页文章卡片封面图模式："background" 将图片作为卡片背景，从右向左渐隐
 const isBgMode = siteConfig.theme.postCard.imageMode === "background";
+
+// 题签（左侧竖排墨条）只刻「中文主词」：竖排里拉丁字母和数字会侧躺，型号前缀
+// （CSP-J-2023 T1-）挂在竖排里既难读又占地方。规则：标题本来就是纯中文就用整条，
+// 否则取最后一段中文；不满意就在 frontmatter 写 railTitle 覆盖。
+function railTextFrom(title: string, override?: string) {
+    if (override) return override;
+    if (!/[A-Za-z0-9]/.test(title)) return title;
+    const tail = title.match(/[一-龥][一-龥，。、·！？：]*$/);
+    return (tail?.[0] ?? title).trim();
+}
+// 题签竖排最多容得下 8 字（.tientie-text 高 210px），超了截断，完整标题横排显示
+const railTextRaw = railTextFrom(entry.data.title, entry.data.railTitle);
+const railText = railTextRaw.length > 8 ? railTextRaw.slice(0, 8) : railTextRaw;
+// 题签已经是完整标题时就不再横排重复一遍（如「你好，宣」）
+const showTitleInContent = railText !== entry.data.title;
 ---
 
 <div class="post-card-wrap" data-aos="fade-up">
@@ -44,7 +59,7 @@ const isBgMode = siteConfig.theme.postCard.imageMode === "background";
         悬停时签脚盖一枚小「宣」印，见 .tientie-seal */}
     <a href={pageUrl} class="tientie" aria-label={title}>
         {entry.data.pinTop > 0 && <Icon name="fluent:pin-24-filled" class="tientie-pin" />}
-        <span class="tientie-text">{title}</span>
+        <span class="tientie-text">{railText}</span>
         <span class="tientie-seal" aria-hidden="true">宣</span>
     </a>
     {/* 右侧：有封面就上图上文，没封面就只是一段文字 */}
@@ -59,6 +74,9 @@ const isBgMode = siteConfig.theme.postCard.imageMode === "background";
             </a>
         ))}
         <div class="content p-6">
+            {showTitleInContent && (
+                <h3 class="card-title"><a href={pageUrl}>{title}</a></h3>
+            )}
             <p class="description text-[var(--text-color-70)] leading-relaxed">
                 {
                     fallback && (
@@ -208,6 +226,27 @@ const isBgMode = siteConfig.theme.postCard.imageMode === "background";
   /* 竖排文字的截断淡出 */
   -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent);
   mask-image: linear-gradient(to bottom, #000 80%, transparent);
+}
+
+/* 横排完整标题：型号前缀（CSP-J-2023 T1-）只有在横排里才读得顺 */
+.card-title {
+  font-family: var(--serif-head);
+  font-size: 1.18rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--ink-strong);
+  margin: 0 0 0.5rem;
+}
+
+.card-title a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.card-title a:hover {
+  color: var(--accent);
 }
 
 /* 悬停时题签脚上盖一枚小「宣」印 */

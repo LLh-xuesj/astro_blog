@@ -8,6 +8,7 @@ tags:
 image: "./cover.webp"
 draft: false
 slugId: alg/luogu-p1588
+railTitle: 抓住那头牛
 ---
 
 ## 题目传送门
