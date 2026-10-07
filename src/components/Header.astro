@@ -144,7 +144,9 @@ if (profileConfig.indexPage) {
 </div>
 
     <!-- nav_bar -->
-    <div id="nav-bar" class="hidden md:flex absolute left-1/2 top-0 transform -translate-x-1/2  justify-center items-center text-lg font-bold my-5 z-100">
+    <div id="nav-bar" class="hidden md:flex absolute top-0 justify-center items-center text-lg font-bold my-5 z-100">
+        {/* 书口：全宽贴顶（left/right/去位移都在下方 CSS 里，不挂 Tailwind 工具类——
+            构建期压缩器会把 CSS 里的 translate:none 优化掉，跟 -translate-x-1/2 打架会输） */}
         <!-- 顶部没有描边、没有底色，只有文字与当前页色块；吸顶后才长出描边 + 毛玻璃底
              （见文件末尾 #nav-bar-list 的规则）。border 宽度一直保留 1px，只把颜色设透明 -->
         <div id="nav-bar-list" class="transition relative z-10 flex max-w-max flex-1 items-center justify-center rounded-xl p-2 border">
@@ -327,8 +329,8 @@ if (profileConfig.indexPage) {
   }
   #nav-bar.nav-scrolled { --nav-chrome: 1; }
 
-  /* 书口定位：铺满页宽、贴住顶缘（Tailwind 的 left-1/2 / -translate-x-1/2 / my-5
-     都被这里的未分层规则压掉）。band 本身不接鼠标事件，点击全部穿透给顶栏 */
+  /* 书口定位：铺满页宽、贴住顶缘。位移工具类已从 JSX 摘掉（构建期压缩器
+     会把 translate:none 优化没了，见模板里的注释），这里只留铺满与归零 */
   #nav-bar {
     font-family: var(--serif-head);
     font-weight: 400;
@@ -336,10 +338,6 @@ if (profileConfig.indexPage) {
     left: 0;
     right: 0;
     margin: 0;
-    /* Tailwind v4 的 -translate-x-1/2 走的是独立 translate 属性，
-       transform: none 取消不了它——必须显式 translate: none（-720px 惨案） */
-    transform: none;
-    translate: none;
     justify-content: center;
     pointer-events: none;
   }
