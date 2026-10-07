@@ -1,0 +1,174 @@
+---
+// SignOff.astro —— 文末落款
+//
+// 中式书信的规矩：正文写完，右下角落款——署名、谦辞、纪年，末了钤一方印。
+// 这里的呈现：靠右一列竖排小字（楷书由 --serif 承担），下方一枚「宣」印；
+// 滚动到眼前时印章才「盖」下去（IntersectionObserver 触发，带一点按压的弹性），
+// 没滚到就始终保持纸上无印的状态。
+//
+// 纪年在构建期换算成汉字数字（二〇二六年十月），不引入任何运行时依赖。
+import Seal from '@components/Seal.astro'
+
+interface Props {
+    name: string;
+    date: Date;
+    /** 谦辞，默认「谨识」 */
+    postscript?: string;
+}
+const { name, date, postscript = '谨识' } = Astro.props
+
+const cnDigit = (n: number) => '〇一二三四五六七八九'[n]
+const year = [...String(date.getFullYear())].map((ch) => cnDigit(Number(ch))).join('')
+const m = date.getMonth() + 1
+const month =
+    m === 10 ? '十' :
+    m === 11 ? '十一' :
+    m === 12 ? '十二' : `${cnDigit(m)}月`
+const dateText = `${year}年${month}`
+---
+
+<div class="xuan-signoff">
+    <span class="signoff-line" aria-hidden="true"></span>
+    <div class="signoff-body">
+        <!-- 传统落款的自右向左：署名（谦辞）最右，纪年列在左、错落下沉，印钤左下 -->
+        <span class="signoff-seal-wrap">
+            <Seal size="1.3rem" rotate={-4} class="signoff-seal" />
+        </span>
+        <span class="signoff-date">{dateText}</span>
+        <span class="signoff-text">{name}{postscript}</span>
+    </div>
+</div>
+
+<style>
+    .xuan-signoff {
+        display: flex;
+        align-items: flex-end;
+        gap: 1.25rem;
+        margin: 2.25rem 0 0.5rem;
+        padding: 0 0.5rem;
+    }
+
+    /* 一道向左淡出的纸色虚线，把落款和正文轻轻隔开 */
+    .signoff-line {
+        flex: 1;
+        border-bottom: 1px dashed var(--paper-edge);
+        margin-bottom: 1.1em;
+        align-self: flex-end;
+    }
+
+    /* 各列横向并排（而不是竖着叠），整块高度只由最高一列决定——
+       这是消灭文末留白的关键 */
+    .signoff-body {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 0.55rem;
+        flex: none;
+    }
+
+    /* 竖排署名：一列小字从上往下读。字面用京华老宋体（--serif-head）——
+       雕版的正体比楷书更「刻」、更旧，和书脊题名是同一支笔 */
+    .signoff-text,
+    .signoff-date {
+        writing-mode: vertical-rl;
+        font-family: var(--serif-head);
+        color: var(--ink-soft);
+        letter-spacing: 0.26em;
+        line-height: 1;
+    }
+
+    .signoff-text {
+        font-size: 0.85rem;
+    }
+
+    /* 纪年列比署名矮一截、再往下沉一点，是落款的错落 */
+    .signoff-date {
+        font-size: 0.72rem;
+        color: var(--ink-mute);
+        transform: translateY(0.9em);
+    }
+
+    .signoff-seal-wrap {
+        display: inline-flex;
+        align-items: flex-end;
+        transform: translateY(0.45em);
+    }
+
+    /* 印章的「盖下去」：初始悬在纸上方（偏大、偏斜、透明），
+       IntersectionObserver 加上 .stamped 后带一点弹性按落 */
+    .xuan-signoff :global(.signoff-seal) {
+        opacity: 0;
+        transform: rotate(-16deg) scale(1.75);
+        transition:
+            opacity 0.28s ease,
+            transform 0.42s cubic-bezier(0.2, 1.4, 0.4, 1);
+    }
+
+    .xuan-signoff.stamped :global(.signoff-seal) {
+        opacity: 1;
+        transform: rotate(-4deg) scale(1);
+    }
+
+    .xuan-signoff .signoff-text,
+    .xuan-signoff .signoff-date {
+        opacity: 0;
+        transition: opacity 0.5s ease 0.15s;
+    }
+
+    .xuan-signoff.stamped .signoff-text,
+    .xuan-signoff.stamped .signoff-date {
+        opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .xuan-signoff :global(.signoff-seal),
+        .xuan-signoff .signoff-text,
+        .xuan-signoff .signoff-date {
+            transition: none;
+        }
+
+        .xuan-signoff :global(.signoff-seal) {
+            transform: rotate(-4deg) scale(1);
+        }
+    }
+</style>
+
+<script>
+import { registerPageInit } from '@utils/pageInit'
+
+function initSignOff() {
+    const signoffs = document.querySelectorAll('.xuan-signoff:not([data-bound])')
+    if (!signoffs.length) return
+
+    // 上一页的观察器先解绑（元素已随 swup 换掉，留着只是泄漏）
+    window.__momoSignOff?.cleanup?.()
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        signoffs.forEach((el) => {
+            el.setAttribute('data-bound', '')
+            el.classList.add('stamped')
+        })
+        return
+    }
+
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return
+                entry.target.classList.add('stamped')
+                observer.unobserve(entry.target)
+            })
+        },
+        // 印要「看得见」才盖：区域露出四成以上才触发，太早就失去仪式感了
+        { threshold: 0.4 }
+    )
+    signoffs.forEach((el) => {
+        el.setAttribute('data-bound', '')
+        observer.observe(el)
+    })
+    window.__momoSignOff = { cleanup: () => observer.disconnect() }
+}
+
+// 落款在 swup 容器内，换页后 DOM 全新：registerPageInit 首屏与每次换页都会跑
+registerPageInit(initSignOff)
+</script>

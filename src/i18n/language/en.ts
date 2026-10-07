@@ -5,6 +5,7 @@ const translation: Translation = {
     header: {
         home: "Home",
         archive: "Archive",
+        murmurs: "Murmurs",
         about: "About",
         friends: "Friends",
     },
@@ -23,6 +24,7 @@ const translation: Translation = {
         meun: "Menu",
         toc: "Contents",
         backToComments: "Back to Comments",
+        copyLink: "Copy link",
         scrollDown: "Scroll down for posts",
     },
     search: {
@@ -41,6 +43,8 @@ const translation: Translation = {
     },
     pagecard: {
         words: "words",
+        copied: "Copied",
+        readInfo: "{words} words, a {minutes}-minute read",
         minutes: "min read",
         uncategorized: "Uncategorized"
     },

@@ -7,7 +7,7 @@ export function pageHeader(active: PageKey, right: HTMLElement) {
   return el('header', { class: 'cms-header' }, [
     el('div', { class: 'cms-header-inner' }, [
       el('h1', { class: 'cms-logo' }, [
-        'Momo ',
+        'Xuan ',
         el('span', { class: 'cms-logo-sub' }, ['CMS']),
       ]),
       el('nav', { class: 'cms-nav' }, [

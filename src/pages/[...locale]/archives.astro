@@ -4,6 +4,7 @@ import ArchivePanel from '@components/ArchivePanel.svelte'
 import FabMenu from '@components/control/FabMenu.astro'
 import { siteConfig } from '@/config'
 import { getBlogEntrySort } from '@utils/contentUtils'
+import { render } from 'astro:content'
 import i18nit from '@i18n/translation'
 import { i18n } from "astro:config/client";
 
@@ -20,6 +21,14 @@ export async function getStaticPaths() {
 // 获取所有博客文章并按发布日期降序排序
 const allBlogPosts = await getBlogEntrySort(currentLang);
 
+// 每篇的字数一并带上（归档页要按年清点「N 篇 · 几言」）
+const allBlogPostsWithWords = await Promise.all(
+    allBlogPosts.map(async (post) => {
+        const { remarkPluginFrontmatter } = await render(post);
+        return { ...post, words: remarkPluginFrontmatter.words || 0 };
+    })
+);
+
 const pageTitle = t("header.archive") + " - " + siteConfig.title;
 // SEO：用该页 Cover 文案（含文章总数）作为描述，避免多个页面共用同一段描述
 const pageDescription = `${t("cover.title.archive")} - ${t("cover.subTitle.archive", { count: allBlogPosts.length })}`;
@@ -28,7 +37,7 @@ const pageDescription = `${t("cover.title.archive")} - ${t("cover.subTitle.archi
 <MainPageLayout title={pageTitle} lang={currentLang} description={pageDescription}>
     <ArchivePanel
         client:visible
-        sortedPosts={allBlogPosts}
+        sortedPosts={allBlogPostsWithWords}
         currentLang={currentLang}
         defaultLocale={i18n!.defaultLocale}
     />

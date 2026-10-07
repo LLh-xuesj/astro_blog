@@ -40,7 +40,7 @@ const collageSettings = siteConfig.theme?.imageCollage ?? {};
 
 // https://astro.build/config
 export default defineConfig({
-  site: siteConfig.rootSiteUrl || 'https://momo.motues.top', // Root URL of site
+  site: siteConfig.rootSiteUrl || 'https://blog.xuesj.top', // Root URL of site（正式域名 blog.xuesj.top；rootSiteUrl 已设值时以它为准）
   i18n: {
     locales: i18nConfig.supportedLanguages,
     defaultLocale: i18nConfig.defaultLanguage,

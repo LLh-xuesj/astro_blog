@@ -5,6 +5,7 @@
   import Icon from '@iconify/svelte';
   import i18nit from '@i18n/translation';
   import { formatMonthDay } from '@/utils/time'
+  import { cnNumber } from '@utils/cnText'
   import { getRelativeLocaleUrl } from '@utils/urlUtils';
 
   export let sortedPosts = [];
@@ -34,6 +35,17 @@
   }, {});
 
   $: years = Object.keys(postsByYear).sort((a, b) => b - a);
+
+  // 年度小结：这一年几篇、共几言（分类筛选时跟着联动）
+  $: yearStats = Object.fromEntries(
+    years.map((year) => {
+      const posts = postsByYear[year];
+      return [year, {
+        count: posts.length,
+        words: posts.reduce((sum, post) => sum + (post.words || 0), 0),
+      }];
+    })
+  );
 
   onMount(() => {
     // 获取初始 URL 参数 - 特殊处理 undefined
@@ -125,6 +137,44 @@
 
 </script>
 
+<style>
+    /* 归档的「卷首」：老宋体大字年份，压一枚朱砂菱印 */
+    .archive-year {
+        font-family: var(--serif-head);
+        font-weight: 400;
+        font-size: 1.7rem;
+        letter-spacing: 0.08em;
+        color: var(--ink-strong);
+    }
+    .archive-year-dot {
+        width: 10px;
+        height: 10px;
+        background: var(--accent);
+        border-radius: 2px;
+        transform: rotate(45deg);
+    }
+    /* 年度小结的小注：像年终清点藏书时写在卷首的那行小字 */
+    .archive-year-stat {
+        font-family: var(--serif);
+        font-size: 0.84rem;
+        letter-spacing: 0.06em;
+        color: var(--ink-mute);
+    }
+    /* 行首的小引导点：空心墨点，悬停时实心变朱砂 */
+    .archive-row-dot {
+        width: 5px;
+        height: 5px;
+        border: 1px solid var(--ink-mute);
+        border-radius: 50%;
+        flex-shrink: 0;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .group:hover .archive-row-dot {
+        background: var(--accent);
+        border-color: var(--accent);
+    }
+</style>
+
 <div class="archives mx-auto w-full max-w-[var(--page-width)]">
     <div class="text-center pt-5 pb-10 max-w-[var(--page-width)] mx-auto md:mt-0 mt-28">
         <h1 class="text-[var(--text-color)] text-3xl py-5 font-bold">{t("header.archive")}</h1>
@@ -134,9 +184,10 @@
     <div class="py-6 mx-auto text-[var(--text-color)]" id="archive-content">
         {#each years as year (year)}
             <div class="mb-8">
-                <h2 class="text-2xl font-bold my-4 text-[var(--text-color)] flex items-center gap-3">
-                    <span class="w-1 h-6 bg-[var(--link-color)] rounded-full"></span>
+                <h2 class="archive-year flex items-baseline gap-3 my-5">
+                    <span class="archive-year-dot" aria-hidden="true"></span>
                     {year}
+                    <span class="archive-year-stat">{cnNumber(yearStats[year].count)}篇 · {cnNumber(yearStats[year].words)}言</span>
                 </h2>
                 <div class="space-y-2">
                     {#each postsByYear[year] as post (post.id)}
@@ -149,7 +200,8 @@
                                     {formatMonthDay(post.data.pubDate, currentLang)}
                                 </span>
                                 
-                                <span class="text-lg group-hover:pl-2 group-hover:text-[var(--link-color)] group-hover:font-bold transition-[padding-left,color,font-weight] duration-200 flex-1 group-active:text-[var(--link-color)]">
+                                <span class="text-lg group-hover:pl-2 group-hover:text-[var(--accent)] group-hover:font-bold transition-[padding-left,color,font-weight] duration-200 flex-1 flex items-center gap-2 group-active:text-[var(--accent)]">
+                                    <span class="archive-row-dot" aria-hidden="true"></span>
                                     {post.data.title}
                                     {#if post.isFallback}
                                         <span class="inline-block px-1 ml-2 text-xs font-mono uppercase bg-[var(--button-hover-color)] rounded border border-[var(--button-border-color)]">

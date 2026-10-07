@@ -4,6 +4,9 @@ import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import Search from '@components/misc/Search.astro';
 import PhotoCover from '@components/PhotoCover.astro';
+import Backdrop from '@components/Backdrop.astro';
+import Motes from '@components/Motes.astro';
+import Festival from '@components/Festival.astro';
 
 
 interface Props {
@@ -61,6 +64,11 @@ const {
        换页时照片层不会被替换 —— 既躲开了 .transition-swup-fade 的 opacity 包含块问题，
        内页之间跳转也不会重新请求图片。 -->
   <div class="relative isolate flex flex-col min-h-screen">
+    <!-- 固定背景层在最底，浮尘画布叠其上；两者都走 z-index:-1 + isolate 的老套路 -->
+    <Backdrop />
+    <Motes />
+    <!-- 节日挂件（灯笼 / 题签）浮在正文之上、顶栏之下 -->
+    <Festival />
     <PhotoCover hero={photoCover} />
 
     <!-- 顶栏在 swup 容器之外：换页时不重建（替代原来的 transition:persist），

@@ -3,6 +3,7 @@ import "@styles/global.css"
 import { Icon } from "astro-icon/components"
 import { profileConfig, siteConfig } from "@/config"
 import ThemeIcon from "./control/ThemeIcon.astro"
+import Seal from "./Seal.astro"
 import { baseUrl } from "@utils/urlUtils"
 
 import { i18n } from "astro:config/client";
@@ -40,6 +41,7 @@ const getLocalePath = (path: string, targetLocale: string) => {
 
 const indexPage = getRelativeLocaleUrl(currentLang, "/");
 const archivesPage = getRelativeLocaleUrl(currentLang, "/archives/");
+const murmursPage = getRelativeLocaleUrl(currentLang, "/murmurs/");
 const friendsPage = getRelativeLocaleUrl(currentLang, "/friends/");
 const aboutPage = getRelativeLocaleUrl(currentLang, "/about/");
 
@@ -89,11 +91,12 @@ if (profileConfig.indexPage) {
 <!-- id="header-bar"：logo + 工具按钮这一条。照片封面时由 PhotoCover.astro 把它整条切白，
      顶栏在 swup 容器外不会重建，所以这里给一个稳定的钩子而不是靠结构选择器 -->
 <div id="header-bar" class="flex items-center pt-2 md:py-4 text-[var(--text-color)] max-w-[var(--header-width)] mx-auto">
-    <!-- logo -->
-    <div class="pr-4 py-2 z-30 header-logo">
+    <!-- logo：站名后面盖一枚「宣」字印章，是 Xuan 主题自己的落款 -->
+    <div class="pr-4 py-2 z-30 header-logo flex items-center">
         <a href={ indexPage } >
             <span class="text-3xl font-bold hover:opacity-60 transition-opacity">{ siteConfig.title }</span>
         </a>
+        <Seal size="1.3rem" class="ml-2" />
     </div>
     
     <!-- tools -->
@@ -155,6 +158,10 @@ if (profileConfig.indexPage) {
           <a href={ archivesPage } data-i18n-path="/archives/" data-i18n-labels={JSON.stringify(i18nLabels("header.archive"))} aria-current={isCurrentPage(archivesPage) ? 'page' : undefined} class={navLinkClass}>
               <span data-i18n-text>{t("header.archive")}</span>
           </a>
+          <!-- 碎碎念链接 -->
+          <a href={ murmursPage } data-i18n-path="/murmurs/" data-i18n-labels={JSON.stringify(i18nLabels("header.murmurs"))} aria-current={isCurrentPage(murmursPage) ? 'page' : undefined} class={navLinkClass}>
+              <span data-i18n-text>{t("header.murmurs")}</span>
+          </a>
           <!-- 关于链接 -->
           <a href={ aboutPage } data-i18n-path="/about/" data-i18n-labels={JSON.stringify(i18nLabels("header.about"))} aria-current={isCurrentPage(aboutPage) ? 'page' : undefined} class={navLinkClass}>
               <span data-i18n-text>{t("header.about")}</span>
@@ -175,6 +182,7 @@ if (profileConfig.indexPage) {
         
         <div class="flex items-center justify-between p-5 border-b border-[var(--button-border-color)]">
             <span class="text-xl font-bold header-logo">{ siteConfig.title }</span>
+            <Seal size="1.1rem" class="ml-2 mr-auto" />
             <button id="mobile-menu-close" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--button-hover-color)] transition-colors">
                 <Icon name="fa6-solid:xmark" class="w-5 h-5" />
             </button>
@@ -188,6 +196,10 @@ if (profileConfig.indexPage) {
             <a href={ archivesPage } data-i18n-path="/archives/" data-i18n-labels={JSON.stringify(i18nLabels("header.archive"))} class={mobileNavLinkClass(archivesPage)}>
                 <Icon name="fa6-solid:book-bookmark" class="w-4 h-4 opacity-70" />
                 <span data-i18n-text>{t("header.archive")}</span>
+            </a>
+            <a href={ murmursPage } data-i18n-path="/murmurs/" data-i18n-labels={JSON.stringify(i18nLabels("header.murmurs"))} class={mobileNavLinkClass(murmursPage)}>
+                <Icon name="fa6-solid:comment-dots" class="w-4 h-4 opacity-70" />
+                <span data-i18n-text>{t("header.murmurs")}</span>
             </a>
             <a href={ aboutPage } data-i18n-path="/about/" data-i18n-labels={JSON.stringify(i18nLabels("header.about"))} class={mobileNavLinkClass(aboutPage)}>
                 <Icon name="fa6-solid:user" class="w-4 h-4 opacity-70" />
@@ -247,8 +259,31 @@ if (profileConfig.indexPage) {
 
 <style is:global>
 .header-logo {
-  font-family: "EB Garamond", cursive;
+  font-family: var(--serif-head);
   letter-spacing: 1px;
+}
+
+/* 站名旁的印章：整页加载时「盖」下去——从斜上方按落，带一点回弹。
+   顶栏在 swup 容器外不会重建，所以整个会话只演一次，不烦人 */
+.header-logo :global(.xuan-seal) {
+  animation: xuan-stamp 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) 0.25s both;
+}
+
+@keyframes xuan-stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-16deg) scale(1.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-3deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-logo :global(.xuan-seal) {
+    animation: none;
+  }
 }
   /* 移动端 (小于 776px) 的毛玻璃和阴影 */
   @media (max-width: 775px) {
@@ -278,37 +313,57 @@ if (profileConfig.indexPage) {
     }
   }
 
-  /* ============ 桌面端导航胶囊（#nav-bar-list）的外壳 ============
-     外壳（描边 / 底色 / 阴影 / 模糊）统一由 --nav-chrome 驱动：0 = 只有文字和当前页色块，
-     1 = 完整毛玻璃胶囊。它是**派生变量**，不是状态：非照片页由脚本按 scrollY 0 / 1 切换，
-     照片封面（首页 hero）则由 photo-cover.css 换成滚动进度 --photo-p，于是和 Cover 一样
-     是逐帧插值渐变，而不是滚一像素就硬切。
+  /* ============ 桌面端导航「书口」（#nav-bar-list）的外壳 ============
+     原先是一枚悬浮毛玻璃胶囊，现在是贴着页面顶缘的**全宽纸带**：
+     未滚动时只有文字（chrome 0），吸顶后纸带显形——底边一道贯穿的墨线，
+     背景是几乎实心的纸色加轻模糊。chrome 仍是派生变量：非照片页由脚本按
+     scrollY 0/1 切换，照片封面页由 photo-cover.css 换成滚动进度 --photo-p。
 
-     ⚠️ 默认值是 1：禁用 JS 时既没有 nav-scrolled 也没有滚动脚本，顶栏必须保持完整胶囊，
-     否则滚起来文字会直接压在正文上。只有脚本可用时才把它归 0。 */
+     ⚠️ 默认值是 1：禁用 JS 时顶栏必须保持完整纸带，否则滚起来文字会直接压在正文上。
+     只有脚本可用时才把它归 0。 */
   #nav-bar { --nav-chrome: 1; }
   @media (scripting: enabled) {
     #nav-bar { --nav-chrome: 0; }
   }
-  /* 吸顶。特异性比上面两条高，顺序无所谓，但排在后面更好读 */
   #nav-bar.nav-scrolled { --nav-chrome: 1; }
 
+  /* 书口定位：铺满页宽、贴住顶缘（Tailwind 的 left-1/2 / -translate-x-1/2 / my-5
+     都被这里的未分层规则压掉）。band 本身不接鼠标事件，点击全部穿透给顶栏 */
+  #nav-bar {
+    font-family: var(--serif-head);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    left: 0;
+    right: 0;
+    margin: 0;
+    /* Tailwind v4 的 -translate-x-1/2 走的是独立 translate 属性，
+       transform: none 取消不了它——必须显式 translate: none（-720px 惨案） */
+    transform: none;
+    translate: none;
+    justify-content: center;
+    pointer-events: none;
+  }
+
   #nav-bar-list {
-    /* border-color 透明 ≠ 没有边框：宽度还在，吸顶时不会跳 1px 布局，
-       moveNavIndicator() 减掉的也正是这 1px */
-    border-color: color-mix(in srgb, var(--button-border-color) calc(var(--nav-chrome, 1) * 100%), transparent);
-    /* ⚠️ 这里的 65% 是「毛玻璃的实心程度」，调它就能整体加减透明度 */
-    background-color: color-mix(in srgb, var(--bg-color) calc(var(--nav-chrome, 1) * 65%), transparent);
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--shadow-color) calc(var(--nav-chrome, 1) * 100%), transparent);
-    /* 注意：与 #main-header 同理，构建时的 CSS 压缩器会把 backdrop-filter 与
-       -webkit-backdrop-filter 当作同一属性合并、只保留后写的那条，
-       所以标准属性必须单独放进 @supports 规则里。 */
-    -webkit-backdrop-filter: blur(calc(12px * var(--nav-chrome, 1)));
+    width: 100%;
+    max-width: none;
+    border-radius: 0;
+    /* 只留底边一道墨线：贯穿的「书口」，吸顶后才显形 */
+    border-width: 0 0 1px 0;
+    border-color: color-mix(in srgb, var(--ink-mute) calc(var(--nav-chrome, 1) * 55%), transparent);
+    /* ⚠️ 88% 是「纸带的实心程度」，调它就能整体加减透明度 */
+    background-color: color-mix(in srgb, var(--bg-color) calc(var(--nav-chrome, 1) * 88%), transparent);
+    box-shadow: none;
+    -webkit-backdrop-filter: blur(calc(10px * var(--nav-chrome, 1)));
   }
   @supports (backdrop-filter: blur(1px)) {
     #nav-bar-list {
-      backdrop-filter: blur(calc(12px * var(--nav-chrome, 1)));
+      backdrop-filter: blur(calc(10px * var(--nav-chrome, 1)));
     }
+  }
+  /* 链接重新接住鼠标；band 容器继续穿透 */
+  #nav-bar-list a {
+    pointer-events: auto;
   }
 
   /* 系统/用户要求降低透明效果时退回纯色背景（同 #main-header） */
@@ -320,23 +375,25 @@ if (profileConfig.indexPage) {
     }
   }
 
-  /* 桌面端导航的「当前页」底色块。
-     独立于链接的一个绝对定位元素，位置 / 尺寸由脚本量当前链接后写入
-     （moveNavIndicator），切页时用 transform 平移过去。 */
+  /* 桌面端导航的「当前页」指示：一枚朱砂圆点，压在当前标签底下——
+     moveNavIndicator() 会把居中后的 x 写进 transform；宽高由 JS 定死成 6px，
+     top 用 !important 定在纸带的下缘。 */
   #nav-indicator {
     position: absolute;
-    top: 0;
+    top: auto !important;
+    bottom: 0.32rem;
     left: 0;
-    width: 0;
-    height: 0;
-    border-radius: 0.5rem;
-    background-color: var(--button-hover-color);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 40%, transparent);
     pointer-events: none;
     opacity: 0;
     transition:
       transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
       width 300ms cubic-bezier(0.4, 0, 0.2, 1),
-      height 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      opacity 300ms ease;
   }
 
   /* 系统/用户要求减弱动画时直接就位，不做滑行 */
@@ -348,6 +405,31 @@ if (profileConfig.indexPage) {
 
   /* 导航链接的悬停反馈：底色归色块，这里只变色。
      当前页不再变色（它已经有底色了），避免色块滑过去时文字还在跳色。 */
+  /* 非当前标签的悬停反馈：一道半透明朱砂细线从左划出。
+     文章页没有「当前标签」（指示线无处安放），悬停线保证导航在那里也有同款视觉 */
+  #nav-bar-list a[data-i18n-path]::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 0.35rem;
+    height: 2px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--accent) 55%, transparent);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.25s ease;
+  }
+
+  #nav-bar-list a[data-i18n-path]:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  #nav-bar-list a[aria-current="page"]::after {
+    display: none;
+  }
+
   #nav-bar-list a[data-i18n-path]:hover {
     color: var(--link-color);
   }
@@ -618,10 +700,11 @@ function moveNavIndicator(link) {
 
   // 四个链接同字号同内边距，top / height 实际是常量，写死即可（CSS 里也没给它们过渡）；
   // 需要过渡的只有水平位移与宽度 —— 四个文案宽度不同，颜色块要能拉伸
-  indicator.style.top = `${y}px`;
-  indicator.style.height = `${linkRect.height}px`;
-  indicator.style.width = `${linkRect.width}px`;
-  indicator.style.transform = `translateX(${x}px)`;
+  // 书口模式：指示器是一枚 6px 的朱砂圆点，按链接中线定位
+  const dot = 6;
+  indicator.style.width = `${dot}px`;
+  indicator.style.height = `${dot}px`;
+  indicator.style.transform = `translateX(${x + (linkRect.width - dot) / 2}px)`;
   indicator.style.opacity = '1';
 }
 

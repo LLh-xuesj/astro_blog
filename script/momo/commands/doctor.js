@@ -1,4 +1,4 @@
-// doctor.js — pnpm momo doctor：检查本地环境与项目状态
+// doctor.js — pnpm xuan doctor：检查本地环境与项目状态
 import { readFile } from 'node:fs/promises'
 import {
   CONFIG_PATHS,
@@ -15,7 +15,7 @@ import {
   readJson,
 } from '../lib.js'
 
-// Astro 7 要求 Node >= 22（见 doc/release_zh-cn.md 的 26.8.15 说明）
+// Astro 7 要求 Node >= 22
 const MIN_NODE_MAJOR = 22
 const LANGS = ['zh-cn', 'en']
 
@@ -47,9 +47,9 @@ async function findClientRouter() {
 export default {
   name: 'doctor',
   summary: '检查环境、依赖与项目状态',
-  usage: 'pnpm momo doctor [--check]',
+  usage: 'pnpm xuan doctor [--check]',
   options: {
-    check: { type: 'boolean', desc: '顺便检查 GitHub Release 上是否有新版本（需要网络）' },
+    check: { type: 'boolean', desc: '（已随 update 命令移除，保留参数名以兼容旧脚本，无实际作用）' },
   },
 
   async run({ flags }) {
@@ -86,22 +86,21 @@ export default {
     if (await pathExists(fromRoot('dist'))) add('ok', '已有构建产物 dist/', formatBytes(await pathSize(fromRoot('dist'))))
     else add('warn', '还没有构建产物', '可执行 pnpm build')
 
-    // git（只有 backup 的版本信息会用到；update 已改为基于 GitHub Release，不再依赖本地 git）
-    if (!hasCommand('git')) add('warn', '未检测到 git', 'pnpm momo backup 不会记录提交信息（update 不受影响）')
+    // git（只有 backup 的版本信息会用到）
+    if (!hasCommand('git')) add('warn', '未检测到 git', 'pnpm xuan backup 不会记录提交信息')
     const git = gitInfo()
     if (git) {
       add('ok', `Git 分支 ${git.branch || '未知'}`, `提交 ${git.commit || '未知'}`)
-      if (git.dirty) add('warn', '工作区有未提交的改动', '建议先提交，便于用 git diff 查看 momo update 带来的变化')
+      if (git.dirty) add('warn', '工作区有未提交的改动', '建议先提交，便于回溯变更')
     } else if (hasCommand('git')) {
-      add('warn', '当前目录不是 git 仓库', '仍可用 pnpm momo update（它按 GitHub Release 更新）')
+      add('warn', '当前目录不是 git 仓库', '建议 git init，便于版本管理')
     }
 
-    // 版本信息：顺便提示是否有新版本（离线时静默跳过）
+    // 版本信息
     const pkg = await readJson(fromRoot('package.json'), {})
     if (pkg.version) add('ok', `项目版本 ${pkg.version}`)
 
-    // 客户端路由（swup）：只在 package.json 里声明了这个依赖时才检查，
-    // 免得给「还没执行 pnpm momo update」的旧站点报无意义的警告
+    // 客户端路由（swup）：只在 package.json 里声明了这个依赖时才检查
     const deps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) }
     if (deps['@swup/astro']) {
       if (await pathExists(fromRoot('node_modules/@swup/astro'))) {
@@ -114,19 +113,8 @@ export default {
       else add('ok', '已无 <ClientRouter /> 残留', '客户端路由由 @swup/astro 接管')
     }
 
-    if (flags.check) {
-      try {
-        const { listReleases, compareVersions } = await import('../release.js')
-        const releases = await listReleases({ repo: process.env.MOMO_REPO || undefined })
-        const latest = releases[0]
-        if (!latest) add('warn', '远端没有可用的 Release')
-        else if (compareVersions(latest.version, pkg.version) > 0) {
-          add('warn', `有新版本 ${latest.tag}`, '执行 pnpm momo update 更新（--dry-run 可先预览）')
-        } else add('ok', `已是最新版本（${latest.tag}）`)
-      } catch (error) {
-        add('warn', '无法检查新版本', error?.message ?? String(error))
-      }
-    }
+    // 注：Momo 上游的 `--check`（联网比对 GitHub Release 新版本）随 update/release 命令
+    // 一起移除了——Xuan 是独立 fork，比上游新版本没有意义。
 
     // 输出
     log.title('环境检查')

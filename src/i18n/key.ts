@@ -2,6 +2,7 @@ export interface Translation {
     header: {
         home: string;
         archive: string;
+        murmurs: string;
         about: string;
         friends: string;
     };
@@ -9,12 +10,14 @@ export interface Translation {
         title: {
             home: string;
             archive: string;
+            murmurs: string;
             about: string;
             friends: string;
         };
         subTitle: {
             home: string;
             archive: string;
+            murmurs: string;
             about: string;
             friends: string;
         };
@@ -34,6 +37,7 @@ export interface Translation {
         toc: string;
         backToComments: string;
         scrollDown: string;
+        copyLink: string;
     }
     search: {
         placeholder: string;
@@ -53,6 +57,8 @@ export interface Translation {
         words: string;
         minutes: string;
         uncategorized: string;
+        copied: string;
+        readInfo: string;
     }
     comments: {
         name: string;

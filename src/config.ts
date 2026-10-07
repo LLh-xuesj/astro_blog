@@ -7,9 +7,9 @@ import type { FriendLink } from "./types/friend"
 import type { I18nConfig } from "./types/i18n"
 
 export const siteConfig: SiteConfig = {
-    title: "Momo", // Title of the site, used in the tab in the browser and in SEO
-    subTitle: "Blog", // Subtitle of the site
-    rootSiteUrl: "https://momo.motues.top", // Root URL of the site, used for generating absolute URLs for SEO and social sharing
+    title: "xuesj'blog", // Title of the site, used in the tab in the browser and in SEO
+    subTitle: "Xuan 主题", // Subtitle of the site
+    rootSiteUrl: "https://blog.xuesj.top", // ⚠️ 必须改成你的真实站点根地址（GitHub Pages 项目页是 https://<用户名>.github.io/<仓库名>，绑了自定义域名就填域名）。canonical / hreflang / sitemap / og:url 全靠它
 
     favicon: "/favicon/favicon.ico", // Path of the favicon, relative to the /public directory
 
@@ -22,9 +22,9 @@ export const siteConfig: SiteConfig = {
         enable: true // Whether to enable blog navigation in the blog footer
     },
     comments: {
-        enable: true, // Whether to enable comments
+        enable: false, // ⚠️ 暂时下线。之前指向 Momo 作者的演示后端（访客评论会存到他的服务器）。要恢复：自建 https://github.com/Motues/Momo-Backend 后改回 true，或把 platform 改成 "twikoo"
         platform: "default", // Comment platform, set "default" to use Momo-backend, also supports "twikoo"
-        backendUrl: "https://api-momo.motues.top" // Backend URL for comments
+        backendUrl: "https://api-momo.motues.top"
     },
     theme: {
         AOS: true, // Whether to enable AOS (Animate On Scroll) for animations
@@ -39,7 +39,7 @@ export const siteConfig: SiteConfig = {
         },
         photoCover: {
             enable: false, // Whether to use a full-screen photo as the background of the home page; the title and subtitle are centered, and everything smoothly returns to the normal style as you scroll down
-            image: "/cover.jpg", // Photo path: relative to the /public directory if it starts with '/', otherwise relative to the /src directory (e.g. assets/cover.jpg). The blurred placeholder is generated at build time, so there is no small image to prepare by hand
+            image: "/cover.jpg", // ⚠️ 原模板的示例图已清理。开启本功能前，先把你的照片放进 public/ 并改成对应文件名，否则构建会因找不到图片而失败
             mask: 0.5 // Opacity (0 - 1) of the black mask over the photo, fading away as you scroll down
         },
         overlayScrollbars: {
@@ -50,16 +50,16 @@ export const siteConfig: SiteConfig = {
     },
     expressiveCode: {
         enable: true, // Whether to enable Expressive Code for code blocks; when false, code blocks fall back to plain text without highlighting (same in the CMS preview)
-        theme: "one-dark-pro" // Shiki theme of code blocks, e.g. "one-dark-pro", "github-dark", "vitesse-dark"; one theme is used for both light and dark mode
+        theme: "xuan-paper" // Shiki theme of code blocks. "xuan-paper" is the built-in paper/ink theme defined in ec.config.mjs (light + dark variants); you can also use any Shiki theme name, e.g. "one-dark-pro", "github-dark", "vitesse-dark" (those are single-theme, used for both light and dark mode)
     }
 }
 
 export const profileConfig: ProfileConfig = {
-    avatar: "assets/Motues.jpg", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
-    name: "Motues", // Used in the footer of the blog
-    description: "Life is colorful!", // Used in SEO
-    indexPage: "https://www.motues.top", // The homepage, used in footer and SEO
-    startYear: 2024, // The year the site was created, used in the footer
+    avatar: "/favicon/xuan-seal-180.png", // 头像：目前先用主题的印章图标顶着，换成你自己的图片后改这里（放 src/assets/ 写相对路径，或放 public/ 写 /开头的路径）
+    name: "xuesj", // Used in the footer of the blog
+    description: "xuesj 的个人博客——把日子写在纸上：读过的书、走过的路、想过的事", // Used in SEO
+    indexPage: "https://xuesj.top", // 个人主页（区别于博客域名 blog.xuesj.top），页脚署名与 SEO 用
+    startYear: 2026, // The year the site was created, used in the footer
 }
 
 export const licenseConfig: LicenseConfig = {
@@ -70,36 +70,40 @@ export const licenseConfig: LicenseConfig = {
 
 export const i18nConfig: I18nConfig = {
     defaultLanguage: "zh-cn", // Default language of the site
-    supportedLanguages: ["zh-cn", "en"], // List of supported languages
+    supportedLanguages: ["zh-cn"], // 只启用中文：语言切换按钮隐藏、不生成 /en/ 镜像页、hreflang 也不再输出英文项。想恢复双语改回 ["zh-cn", "en"] 并补上各文章的 en.md 即可（translations 里的英文文案保留着）
     translations: { // Translation content for each supported language
         "zh-cn": {
             Cover: {
                 title: {
-                    home: "欢迎来到 Momo 的博客",
+                    home: "把日子写在纸上",
                     archive: "文章归档",
+                    murmurs: "碎碎念",
                     about: "关于",
                     friends: "友链",
                 },
                 subTitle: {
-                    home: "生活多彩！",
+                    home: "读过的书，走过的路，想过的事",
                     archive: "共 {count} 篇文章", // {count} will be replaced with the total number of articles
-                    about: "一个极简的Blog模板",
-                    friends: "有趣的灵魂",
+                    murmurs: "一些没长成文章的念头",
+                    about: "以宣纸为底，以墨为字",
+                    friends: "有趣的灵魂"
                 }
             }
         },
         "en": {
             Cover: {
                 title: {
-                    home: "Welcome to Momo's Blog",
+                    home: "Days written on paper",
                     archive: "Archive",
+                    murmurs: "Murmurs",
                     about: "About",
                     friends: "Friends",
                 },
                 subTitle: {
-                    home: "Life is colorful!",
+                    home: "Books read, roads taken, thoughts had",
                     archive: "Total of {count} articles",
-                    about: "A minimalist blog template",
+                    murmurs: "Thoughts too small for a post",
+                    about: "Paper as the ground, ink as the letters",
                     friends: "Interesting Souls",
                 }
             }

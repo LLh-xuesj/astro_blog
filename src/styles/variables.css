@@ -1,3 +1,13 @@
+/* ===========================================================================
+ * 主题变量
+ * ---------------------------------------------------------------------------
+ * 这里只做两件事：① 定义「宣纸」这套纸与墨的设计令牌；② 把它们映射到 Momo
+ * 原有的语义变量上（--bg-color / --text-color / --link-color ...）。
+ * 所有组件都是通过语义变量取色的，所以改这一份文件就能全站换肤。
+ *
+ * 令牌取值照抄 Typora 宣纸主题（xuan.css）的 :root，见文件末尾的对照说明。
+ * =========================================================================== */
+
 :root {
   color-scheme: light;
 
@@ -9,66 +19,194 @@
   --category-width: min(calc((100vw - var(--page-width)) / 3), 200px);
 }
 
+/* ---------------------------------------------------------------------------
+ * 字体栈
+ * ---------------------------------------------------------------------------
+ * 照抄宣纸主题 --serif / --serif-head 的顺序，语义很关键：
+ * 纯西文字体必须排在文楷「之前」才能接管西文；文楷自带西文字形，
+ * 排在它后面的西文字体永远不会生效。EB Garamond 没有汉字，汉字自然落到文楷。
+ * 标点与符号的显示效果也依赖这个顺序。
+ * ------------------------------------------------------------------------- */
+:root {
+  /* 正文：西文 EB Garamond（放大版），中文霞鹜文楷 */
+  --serif: "EB Garamond Xuan", Georgia, "霞鹜文楷", "LXGW WenKai", "霞鹜文楷 Medium",
+           "LXGW WenKai Medium", "Noto Serif SC", "Source Han Serif SC", "Songti SC",
+           "STSong", SimSun, serif;
+  /* 标题：中文京华老宋体（1961 年北京新华字模厂老筑地体 61-1 的数字化）。
+     老宋体只有一个字重，h1~h6 一律请求 400，见 markdown.css 的说明 */
+  --serif-head: "EB Garamond Xuan", Georgia, "京華老宋体", "KingHwaOldSong",
+                "KingHwa_OldSong", "Noto Serif SC SemiBold", "Noto Serif SC",
+                "Source Han Serif SC", "Songti SC", SimSun, serif;
+  /* 标记 / 加粗：西文 EB Garamond SemiBold，中文文楷 Medium */
+  --serif-strong: "EB Garamond Xuan Strong", Georgia, "霞鹜文楷 Medium",
+                  "LXGW WenKai Medium", "Noto Serif SC", serif;
+  --sans: "Segoe UI", "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei",
+          "PingFang SC", system-ui, -apple-system, sans-serif;
+  /* 代码：Fira Code（自带连字）；代码块里的中文注释落到思源黑体 */
+  --mono: "Fira Code", "Cascadia Code", "JetBrains Mono Variable", Consolas,
+          "DejaVu Sans Mono", "Noto Sans SC", monospace;
+}
 
-/* 颜色变量 */
-/* --bg-color               页面背景色
+/* ---------------------------------------------------------------------------
+ * 纸与墨（亮色）
+ * ------------------------------------------------------------------------- */
+:root {
+  /* --- 纸 --------------------------------------------------------------- */
+  --paper: #f6f0e0;          /* 桌面底色：陈一年宣纸的调子 */
+  --paper-sheet: #fbf6ea;    /* 正文纸张 */
+  --paper-deep: #f0e8d4;     /* 侧栏 / 纸纹较深处 */
+  --paper-edge: #dfd2b8;     /* 描边 */
+  --paper-line: #e5dabb;     /* 更淡的线 */
+
+  /* --- 墨 --------------------------------------------------------------- */
+  --ink: #2f2b26;            /* 正文墨色 */
+  --ink-strong: #1d1a17;     /* 标题墨色 */
+  --ink-soft: #5f574e;       /* 次要文字 */
+  --ink-mute: #8d8378;       /* 辅助文字、语法符号 */
+
+  /* --- 彩 ---------------------------------------------------------------
+   * 色谱出处：accent / dai / gold 三个名字本身就是传统色名。
+   * 「中国色」网站（zhongguose.com，526 色库）上，朱砂/黛青/墨色并无正名，
+   * 纯颜料又过艳（藤黄 #ffd111、朱红 #ed5126 上屏扎眼），故取其「沉在纸上」
+   * 的近亲；唯一整色采纳的是青莲 #8b2671（important 提示块，见 markdown.css）。
+   * --------------------------------------------------------------------- */
+  --accent: #b23a2e;         /* 朱砂 */
+  --accent-soft: rgba(178, 58, 46, 0.10);
+  --dai: #3c5b6f;            /* 黛青 */
+  --dai-soft: rgba(60, 91, 111, 0.09);
+  --gold: #d6b24a;           /* 藤黄 */
+  --gold-deep: #b99a3d;      /* 藤黄（深）：内层标记、分割线中点、三层引用边线 */
+  --gold-soft: rgba(214, 178, 74, 0.40);   /* 藤黄（淡）：高亮底色 */
+
+  /* --- 代码块 ----------------------------------------------------------- */
+  --code-bg: #f1e9d5;
+  --code-border: #dfd3ba;
+  --code-ink: #3b352d;
+  --code-rail: #cbbda4;      /* 代码块左侧那道粗边 */
+  --code-inline-bg: #efe6cc;
+  --code-inline-border: #e1d3b4;
+  --code-inline-ink: #a2382c;
+
+  /* --- 排版量 ----------------------------------------------------------- */
+  --body-size: 17px;
+  --body-leading: 1.9;
+
+  /* --- 纸纹 -------------------------------------------------------------
+   * 一层平铺的极淡噪点，压在纸色底下，凑近能看出「纤维」。
+   * 用 SVG feTurbulence 现算，不占一个图片文件；浓淡只改 url() 里的 opacity。
+   * 这一层是 background-image 的最后一层（最下面），所以不参与内容区的混合，
+   * 也不会盖住正文——不用 mix-blend-mode，就没有叠层顺序的坑。 */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.065'/%3E%3C/svg%3E");
+
+  /* --- 远山 -------------------------------------------------------------
+   * 页面底缘一层剪影山影：两层折线山脊，浓淡做出远近。
+   * 浓度刻意压到近看不见、关掉又觉得少点什么的地步——是背景的「深度」，
+   * 不是一幅画。想调浓淡改 fill-opacity；想换山形直接改 path。
+   * 放在 body 背景最底（grain 之上、正文之下），fixed 定位不随滚动。 */
+  --xuan-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' preserveAspectRatio='xMidYMax slice'%3E%3Cpath fill='%232f2b26' fill-opacity='.032' d='M0 190 L90 150 L200 208 L330 118 L470 200 L610 132 L760 206 L930 96 L1090 196 L1240 140 L1360 198 L1440 162 L1440 300 L0 300 Z'/%3E%3Cpath fill='%232f2b26' fill-opacity='.05' d='M0 242 L150 198 L300 250 L480 180 L660 244 L860 172 L1050 248 L1230 200 L1440 248 L1440 300 L0 300 Z'/%3E%3C/svg%3E");
+}
+
+/* ---------------------------------------------------------------------------
+ * 语义变量：把上面那套纸墨映射到 Momo 原有的变量名上
+ * ---------------------------------------------------------------------------
+ * --bg-color               页面背景色
  * --text-color             文字基本色，通过透明度来控制颜色深浅，分为两类
  *     --text-color:        适用于标题、正文等需要突出显示的内容
  *     --text-color-70      适用于次要信息、辅助文本等不需要过于突出显示的内容
  * --link-color             彩色基本色，适用于链接、按钮等颜色突出的地方
  * --button-hover-color     按钮鼠标悬停背景色
  * --button-border-color    按钮边框色
+ * --border-color           分隔线 / 表格描边（原先 markdown.css 里引用了但没定义）
 */
 :root {
-    --bg-color: #fbfbfb;
-    --text-color: #000000;
-    --text-color-70: #4c4c4c;
-    --shadow-color: rgba(0, 0, 0, 0.15);
-    --link-color: #003b6e;
-    --button-hover-color: #eeeeee;
-    --button-border-color: #d6d6d6;
+  --bg-color: var(--paper);
+  --text-color: var(--ink);
+  --text-color-70: var(--ink-soft);
+  --shadow-color: rgba(70, 60, 45, 0.22);
+  --link-color: var(--dai);
+  --button-hover-color: var(--paper-deep);
+  --button-border-color: var(--paper-edge);
+  --border-color: var(--paper-edge);
 
-    --warning-text-color: #4d3800;
-    --warning-bg-color: #fff7ed;
-    --warning-border-color: #e6a700;
+  --warning-text-color: #7a5310;
+  --warning-bg-color: #fbf3e2;
+  --warning-border-color: #dfc07f;
 
-    --danger-text-color: #4b1113;
-    --danger-bg-color: #ffebec;
-    --danger-border-color: #e13238;
-    
-    /* 滚动条颜色 */
-    --scrollbar-thumb: #c1c1c1;
-    --scrollbar-thumb-hover: #a8a8a8;
-    --scrollbar-track: #e1e1e1;
+  --danger-text-color: #8e2f26;
+  --danger-bg-color: #fbeeec;
+  --danger-border-color: var(--accent);
 
-    --selection-bg-color: #0063ba;
-    --selection-text-color: #ffffff;
-  }
+  /* 滚动条颜色 */
+  --scrollbar-thumb: #d9cdb6;
+  --scrollbar-thumb-hover: #c6b69a;
+  --scrollbar-track: var(--paper-deep);
 
-  [data-theme="dark"] {
-    color-scheme: dark;
+  --selection-bg-color: rgba(178, 58, 46, 0.20);
+  --selection-text-color: var(--ink-strong);
+}
 
-    --bg-color: #0a0a0a;
-    --text-color: #ffffff;
-    --text-color-70: #b5b5b5;
-    --shadow-color: rgba(255, 255, 255, 0.15);
-    --link-color: #57ace7;
-    --button-hover-color: #262626;
-    --button-border-color: #3d3d3d;
+/* ---------------------------------------------------------------------------
+ * 暗色：宣纸主题本身没有暗色版，这里按同一套「纸与墨」的思路配一版「夜墨」，
+ * 保持暖调（而不是纯灰黑），朱砂与黛青都提亮一档以保证对比度。
+ * ------------------------------------------------------------------------- */
+[data-theme="dark"] {
+  color-scheme: dark;
 
-    --warning-text-color: #f2d680;
-    --warning-bg-color: #332a00;
-    --warning-border-color: #ad8002;
+  --paper: #1a1714;
+  --paper-sheet: #211d19;
+  --paper-deep: #262019;
+  --paper-edge: #3b342b;
+  --paper-line: #332d25;
 
-    --danger-text-color: #f2a0a3;
-    --danger-bg-color: #3b1d1e;
-    --danger-border-color: #e13238;
-    
-    /* 滚动条颜色 */
-    --scrollbar-thumb: #4b4c4e;
-    --scrollbar-thumb-hover: #37383a;
-    --scrollbar-track: #1a202c;
+  --ink: #e6ded0;
+  --ink-strong: #f5efe4;
+  --ink-soft: #b3a897;
+  --ink-mute: #8b8175;
 
-    --selection-bg-color: #2f5f80;
-    --selection-text-color: #ffffff;
-  }
+  --accent: #d95a4c;
+  --accent-soft: rgba(217, 90, 76, 0.16);
+  --dai: #7ba3bb;
+  --dai-soft: rgba(123, 163, 187, 0.14);
+  --gold: #d6b24a;
+  --gold-deep: #c0a044;
+  --gold-soft: rgba(214, 178, 74, 0.30);
+
+  --code-bg: #2a251f;
+  --code-border: #3b342b;
+  --code-ink: #e2d9c9;
+  --code-rail: #6b5f52;
+  --code-inline-bg: #2f2921;
+  --code-inline-border: #423a30;
+  --code-inline-ink: #e5857a;
+
+  /* 夜墨底上的纸纹要稍浓一点才看得出，但仍是不打扰阅读的程度 */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.07'/%3E%3C/svg%3E");
+
+  /* 夜墨里的远山换成淡墨反白，像月光下的山影 */
+  --xuan-hills: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 300' preserveAspectRatio='xMidYMax slice'%3E%3Cpath fill='%23e6ded0' fill-opacity='.02' d='M0 190 L90 150 L200 208 L330 118 L470 200 L610 132 L760 206 L930 96 L1090 196 L1240 140 L1360 198 L1440 162 L1440 300 L0 300 Z'/%3E%3Cpath fill='%23e6ded0' fill-opacity='.03' d='M0 242 L150 198 L300 250 L480 180 L660 244 L860 172 L1050 248 L1230 200 L1440 248 L1440 300 L0 300 Z'/%3E%3C/svg%3E");
+
+  --bg-color: var(--paper);
+  --text-color: var(--ink);
+  --text-color-70: var(--ink-soft);
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --link-color: var(--dai);
+  --button-hover-color: var(--paper-deep);
+  --button-border-color: var(--paper-edge);
+  --border-color: var(--paper-edge);
+
+  --warning-text-color: #f2d680;
+  --warning-bg-color: #332a00;
+  --warning-border-color: #ad8002;
+
+  --danger-text-color: #f2a0a3;
+  --danger-bg-color: #3b1d1e;
+  --danger-border-color: var(--accent);
+
+  /* 滚动条颜色 */
+  --scrollbar-thumb: #4a4239;
+  --scrollbar-thumb-hover: #5d5347;
+  --scrollbar-track: #211d19;
+
+  --selection-bg-color: rgba(217, 90, 76, 0.30);
+  --selection-text-color: var(--ink-strong);
+}

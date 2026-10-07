@@ -1,0 +1,132 @@
+---
+import MainPageLayout from '@layouts/MainPageLayout.astro'
+import Cover from '@components/Cover.astro'
+import FabMenu from '@components/control/FabMenu.astro'
+
+import { getCollection, render } from 'astro:content'
+import { siteConfig } from '@/config'
+import i18nit from '@i18n/translation'
+import { i18n } from "astro:config/client";
+
+export async function getStaticPaths() {
+    return i18n?.locales.map(locale => ({ params: { locale: locale == i18n?.defaultLocale ? undefined : (locale as string) } }));
+}
+
+const currentLang = Astro.currentLocale || i18n!.defaultLocale;
+const t = i18nit(currentLang);
+
+// 碎碎念按时间倒序；每条正文都可能是 markdown，预渲染好再交给模板
+const murmurs = (await getCollection('murmurs')).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+const rendered = await Promise.all(
+    murmurs.map(async (m) => ({ ...m, Content: (await render(m)).Content }))
+);
+
+/* 纪年换算成汉字（二〇二六年十月六日），与文末落款同一套写法 */
+const cnDigit = (n: number) => '〇一二三四五六七八九'[n]
+const cnDay = (d: number) =>
+    d === 10 ? '十' :
+    d < 10 ? cnDigit(d) :
+    d < 20 ? '十' + cnDigit(d - 10) :
+    d === 20 ? '二十' :
+    d < 30 ? '二十' + cnDigit(d - 20) :
+    d === 30 ? '三十' : '三十' + cnDigit(d - 30)
+const cnMonth = (m: number) => (m === 10 ? '十' : m === 11 ? '十一' : m === 12 ? '十二' : cnDigit(m))
+const cnDate = (date: Date) =>
+    `${[...String(date.getFullYear())].map((c) => cnDigit(Number(c))).join('')}年${cnMonth(date.getMonth() + 1)}月${cnDay(date.getDate())}日`
+
+const pageTitle = t("header.murmurs") + " - " + siteConfig.title;
+const pageDescription = `${t("cover.title.murmurs")} - ${t("cover.subTitle.murmurs")}`;
+---
+<MainPageLayout title={pageTitle} lang={currentLang} description={pageDescription}>
+    <div class="mx-auto w-full max-w-[var(--page-width)]">
+        <Cover title={t("cover.title.murmurs")} subTitle={t("cover.subTitle.murmurs")}/>
+        <ul class="xuan-murmurs" role="list">
+            {rendered.map((m, i) => (
+                <li data-aos="fade-up" data-aos-delay={(i % 5) * 50}>
+                    <div class="murmur-meta">
+                        <span class="murmur-dot" aria-hidden="true"></span>
+                        <span class="murmur-date">{cnDate(m.data.pubDate)}</span>
+                        {m.data.mood && <span class="murmur-mood">「{m.data.mood}」</span>}
+                    </div>
+                    <div class="murmur-text">
+                        <m.Content />
+                    </div>
+                </li>
+            ))}
+        </ul>
+    </div>
+    <!-- fixed 浮层：留在 swup 容器内，但在淡入淡出元素之外（见 MainPageLayout 的说明） -->
+    <div slot="overlay">
+        <FabMenu showBackBottom={true} />
+    </div>
+</MainPageLayout>
+
+<style>
+    /* 墨点卷轴：一条纸色虚线串起所有念头，每条念头摁一枚小小的朱砂菱印 */
+    .xuan-murmurs {
+        list-style: none;
+        margin: 0.5rem 0 2rem;
+        padding: 0 0.25rem;
+        position: relative;
+    }
+
+    .xuan-murmurs::before {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 10px;
+        bottom: 14px;
+        border-left: 1px dashed var(--paper-edge);
+    }
+
+    .xuan-murmurs > li {
+        position: relative;
+        padding: 0 0 2.2rem 1.7rem;
+    }
+
+    .xuan-murmurs > li:last-child {
+        padding-bottom: 0.5rem;
+    }
+
+    .murmur-dot {
+        position: absolute;
+        left: 1px;
+        top: 0.38em;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 2px;
+        transform: rotate(45deg);
+        /* 一圈纸色描边，让菱印像盖在虚线上而不是被虚线穿过 */
+        box-shadow: 0 0 0 3px var(--bg-color);
+    }
+
+    .murmur-date {
+        font-family: var(--serif-head);
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        color: var(--ink-mute);
+    }
+
+    .murmur-mood {
+        margin-left: 0.6rem;
+        font-family: var(--serif);
+        font-size: 0.78rem;
+        color: var(--accent);
+    }
+
+    .murmur-text {
+        margin-top: 0.45rem;
+        font-family: var(--serif);
+        font-size: 0.95rem;
+        line-height: 1.85;
+        color: var(--ink);
+    }
+
+    .murmur-text :global(p) {
+        margin: 0;
+        text-align: justify;
+    }
+</style>

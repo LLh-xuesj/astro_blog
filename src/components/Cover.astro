@@ -19,6 +19,27 @@ const { title, subTitle, photo = false } = Astro.props;
 const currentLang = Astro.currentLocale || i18n?.defaultLocale || 'zh-cn';
 // 箭头只是无障碍标签，页面每次导航都会重建，语言切换后自然跟着更新
 const scrollDownLabel = i18nit(currentLang)("button.scrollDown");
+
+/* 「今日一句」：取一句公版古语，按当天日期轮换（构建时先放一句兜底，
+   页面脚本再按访客的当天日期精调——不请求任何外部服务） */
+const QUOTES = [
+    { text: '纸上得来终觉浅，绝知此事要躬行。', author: '陆游' },
+    { text: '问渠那得清如许？为有源头活水来。', author: '朱熹' },
+    { text: '博观而约取，厚积而薄发。', author: '苏轼' },
+    { text: '旧书不厌百回读，熟读深思子自知。', author: '苏轼' },
+    { text: '文章千古事，得失寸心知。', author: '杜甫' },
+    { text: '读书破万卷，下笔如有神。', author: '杜甫' },
+    { text: '路漫漫其修远兮，吾将上下而求索。', author: '屈原' },
+    { text: '千淘万漉虽辛苦，吹尽狂沙始到金。', author: '刘禹锡' },
+    { text: '非淡泊无以明志，非宁静无以致远。', author: '诸葛亮' },
+    { text: '好读书，不求甚解；每有会意，便欣然忘食。', author: '陶渊明' },
+    { text: '流水不腐，户枢不蠹。', author: '《吕氏春秋》' },
+    { text: '尽信书，则不如无书。', author: '孟子' },
+]
+const buildDay = Math.floor(Date.now() / 86400000)
+const initial = QUOTES[buildDay % QUOTES.length]
+// 打字机只给首页：内页每次导航都打一遍会烦
+const isHome = [''].includes(Astro.url.pathname.replace(/\/+$/, ''))
 ---
 
 <!-- 非照片模式时 section 只是个普通容器，样式全靠类名 -->
@@ -38,10 +59,122 @@ const scrollDownLabel = i18nit(currentLang)("button.scrollDown");
         id={ photo ? "photo-cover-text" : undefined }
         class:list={[
             "text-center max-w-[var(--page-width)] mx-auto",
-            photo ? "photo-cover-copy" : "pt-5 pb-10 md:mt-0 mt-28"
+            photo ? "photo-cover-copy" : "xuan-cover-rise pt-5 pb-10 md:mt-0 mt-28"
         ]}
     >
         { title && <h1 class="text-[var(--text-color)] text-3xl py-5 font-bold">{ title }</h1> }
         { subTitle && <p class="text-[var(--text-color-70)] font-bold">{ subTitle }</p> }
+        { !photo && (
+            <p class="xuan-daily" data-pool={JSON.stringify(QUOTES)} data-typewriter={isHome ? '' : undefined}>
+                <span class="daily-text">「{initial.text}」</span>
+                <span class="daily-author">—— {initial.author}</span>
+            </p>
+        ) }
     </div>
 </section>
+
+<script is:inline>
+    // 「今日一句」：先按日期取句；首页且未开启减弱动态时，用打字机把句子「写」出来
+    // （落笔前先把服务端预置的整句清掉——本脚本是解析期内联执行的，不会有先显后清的闪帧）。
+    // 脚本随 swup 换页重放，幂等；无 JS / 减弱动态时保持预置的整句不动。
+    (function () {
+        var el = document.querySelector('.xuan-daily');
+        if (!el) return;
+        var pool;
+        try { pool = JSON.parse(el.getAttribute('data-pool') || '[]'); } catch (e) { pool = []; }
+        var q = pool.length ? pool[Math.floor(Date.now() / 86400000) % pool.length] : null;
+        var textEl = el.querySelector('.daily-text');
+        var authorEl = el.querySelector('.daily-author');
+        var full = q ? '「' + q.text + '」' : (textEl ? textEl.textContent : '');
+        var author = q ? '—— ' + q.author : (authorEl ? authorEl.textContent : '');
+
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!el.hasAttribute('data-typewriter') || reduce) {
+            textEl.textContent = full;
+            authorEl.textContent = author;
+            return;
+        }
+
+        textEl.textContent = '';
+        authorEl.textContent = '';
+        authorEl.style.opacity = '0';
+        var cursor = document.createElement('span');
+        cursor.className = 'daily-cursor';
+        el.insertBefore(cursor, authorEl);
+
+        var i = 0;
+        var tick = function () {
+            if (i < full.length) {
+                textEl.textContent = full.slice(0, ++i);
+                // 每字 70~160ms 的抖动，像写字有快有慢
+                setTimeout(tick, 70 + Math.random() * 90);
+            } else {
+                cursor.remove();
+                authorEl.textContent = author;
+                authorEl.style.opacity = '';
+            }
+        };
+        // 等封面三连渐入落到「今日一句」再动笔
+        setTimeout(tick, 750);
+    })();
+</script>
+
+<style>
+    .xuan-daily {
+        margin-top: 0.9rem;
+        font-family: var(--serif);
+        font-size: 0.82rem;
+        letter-spacing: 0.06em;
+        color: var(--ink-mute);
+        min-height: 1.4em;
+    }
+
+    .xuan-daily .daily-author {
+        margin-left: 0.4em;
+        font-size: 0.74rem;
+        opacity: 0.85;
+        transition: opacity 0.6s ease;
+    }
+
+    /* 打字机的笔尖：一枚小小的朱砂竖笔，写完即收 */
+    .xuan-daily :global(.daily-cursor) {
+        display: inline-block;
+        width: 2px;
+        height: 0.95em;
+        margin-left: 1px;
+        background: var(--accent);
+        vertical-align: -0.12em;
+        animation: daily-cursor-blink 1s steps(2) infinite;
+    }
+
+    @keyframes daily-cursor-blink {
+        50% { opacity: 0; }
+    }
+
+    /* 封面三连渐入：标题、副标题、今日一句依次浮上来。
+       只在非照片模式挂 xuan-cover-rise；照片模式的入场由 photo-cover.css 接管 */
+    .xuan-cover-rise > * {
+        animation: cover-rise 0.6s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+    }
+
+    .xuan-cover-rise > :nth-child(1) { animation-delay: 0.05s; }
+    .xuan-cover-rise > :nth-child(2) { animation-delay: 0.18s; }
+    .xuan-cover-rise > :nth-child(3) { animation-delay: 0.32s; }
+
+    @keyframes cover-rise {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .xuan-cover-rise > * {
+            animation: none;
+        }
+    }
+</style>

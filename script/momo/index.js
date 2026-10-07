@@ -1,31 +1,32 @@
 #!/usr/bin/env node
-// index.js — momo CLI 入口：pnpm momo <command> [options]
+// index.js — xuan CLI 入口：pnpm xuan <command> [options]（沿用 Momo 的工具箱，命令名与提示改成 Xuan）
 import { CliError, c, formatOptions, fromRoot, log, parseArgs, readJson } from './lib.js'
 import backup from './commands/backup.js'
 import restore from './commands/restore.js'
-import update from './commands/update.js'
 import newPost from './commands/new.js'
 import clean from './commands/clean.js'
 import doctor from './commands/doctor.js'
 import audit from './commands/audit.js'
 
-const COMMANDS = [backup, restore, update, newPost, clean, doctor, audit]
+// 注：Momo 上游还有 update / release 两个命令（从 GitHub Release 拉模板代码覆盖本地）。
+// Xuan 是独立的主题 fork，跑一次 update 就会把定制全部冲掉，所以这里整组移除，
+// 文件也已删除；要同步上游改动请用 git 手动对比合并。
+const COMMANDS = [backup, restore, newPost, clean, doctor, audit]
 
 const ALIASES = {
   b: 'backup',
-  up: 'update',
   n: 'new',
   doc: 'doctor',
 }
 
 function printHeader(version) {
-  log.raw(`${c.bold('Momo CLI')} ${c.gray(`v${version} — 博客与 CMS 的本地工具箱`)}`)
+  log.raw(`${c.bold('Xuan CLI')} ${c.gray(`v${version} — 博客与 CMS 的本地工具箱`)}`)
   log.raw()
 }
 
 function printHelp(version) {
   printHeader(version)
-  log.raw(`${c.bold('用法')}  pnpm momo <command> [options]`)
+  log.raw(`${c.bold('用法')}  pnpm xuan <command> [options]`)
   log.raw()
   log.raw(c.bold('命令'))
   const width = Math.max(...COMMANDS.map((cmd) => cmd.name.length))
@@ -33,21 +34,19 @@ function printHelp(version) {
     log.raw(`  ${c.cyan(cmd.name.padEnd(width + 2))}${cmd.summary}`)
   }
   log.raw()
-  log.raw(c.gray('  pnpm momo <command> --help   查看某个命令的详细用法'))
-  log.raw(c.gray('  pnpm momo --version          查看 CLI 版本'))
+  log.raw(c.gray('  pnpm xuan <command> --help   查看某个命令的详细用法'))
+  log.raw(c.gray('  pnpm xuan --version          查看 CLI 版本'))
   log.raw()
   log.raw(`${c.bold('示例')}`)
-  log.raw(c.gray('  pnpm momo backup              备份 src/config.ts'))
-  log.raw(c.gray('  pnpm momo backup --config     备份全部配置文件'))
-  log.raw(c.gray('  pnpm momo backup --all        备份全部配置和文章内容'))
-  log.raw(c.gray('  pnpm momo update              从 GitHub Release 更新模板代码'))
-  log.raw(c.gray('  pnpm momo update --dry-run    预览更新会改动哪些文件'))
-  log.raw(c.gray('  pnpm momo new my-post         新建文章'))
+  log.raw(c.gray('  pnpm xuan backup              备份 src/config.ts'))
+  log.raw(c.gray('  pnpm xuan backup --config     备份全部配置文件'))
+  log.raw(c.gray('  pnpm xuan backup --all        备份全部配置和文章内容'))
+  log.raw(c.gray('  pnpm xuan new my-post         新建文章'))
 }
 
 function printCommandHelp(command) {
   log.raw()
-  log.raw(`${c.bold('pnpm momo ' + command.name)}  ${c.gray(command.summary)}`)
+  log.raw(`${c.bold('pnpm xuan ' + command.name)}  ${c.gray(command.summary)}`)
   log.raw()
   log.raw(`${c.bold('用法')}  ${command.usage}`)
   if (command.details) {
@@ -77,7 +76,7 @@ async function main() {
   }
 
   if (name === 'version' || name === '-v' || name === '--version') {
-    log.raw(`momo CLI（项目版本 ${version}）`)
+    log.raw(`Xuan CLI（项目版本 ${version}）`)
     return
   }
 

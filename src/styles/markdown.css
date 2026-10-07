@@ -1,17 +1,14 @@
-/* 颜色变量 */
+/* 引用块 / 提示框的强调色：直接取 variables.css 里的纸墨令牌，深浅色自动跟着走 */
 :root {
-    --quote-left-color: #dadde1;
+    --quote-left-color: var(--accent);
 
     /* alerts color */
-    --primary-color: #007acc;
-}
-
-[data-theme="dark"] {
-    --quote-left-color: #606770;
+    --primary-color: var(--accent);
 }
 
 .markdown-content {
-  line-height: 1.75;
+  font-size: var(--body-size);
+  line-height: var(--body-leading);
 }
 
 .markdown-content > figure,
@@ -22,48 +19,95 @@
   contain-intrinsic-size: auto 16rem;
 }
 
+/* 标题统一走 --serif-head：西文 EB Garamond，中文京华老宋体。
+   京华老宋体只有一个字重，若请求 600 浏览器会合成粗体，把老宋体
+   「横细竖粗」的笔画对比糊掉，所以 h1~h6 一律 font-weight: 400，
+   呈现字面本来的正体（要换多字重标题字时才改这里）。 */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-family: var(--serif-head);
+  color: var(--ink-strong);
+  font-weight: 400;
+  line-height: 1.35;
+  padding: 0;
+  border: 0;
+}
+
+/* 一级标题：居中 + 一道朱砂短横 */
 .markdown-content h1 {
-  padding: 0.5rem 0;
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 2rem 0 1rem;
-  border-bottom: 1px solid var(--text-color);
+  font-size: 2.05em;
+  letter-spacing: 0.06em;
+  text-align: center;
+  margin: 3.2rem 0 2.2rem;
 }
 
+.markdown-content h1::after {
+  content: "";
+  display: block;
+  width: 2.6em;
+  height: 3px;
+  margin: 0.9rem auto 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent) 20%, var(--accent) 80%, transparent);
+}
+
+/* 二级标题：朱砂左标 */
 .markdown-content h2 {
-  padding: 0.4rem 0;
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin: 1.8rem 0 1rem;
-  border-bottom: 1px solid var(--text-color);
+  font-size: 1.5em;
+  letter-spacing: 0.03em;
+  margin: 2.6rem 0 1.1rem;
+  padding: 0.06em 0 0.06em 0.7em;
+  border-left: 4px solid var(--accent);
 }
 
+/* 三级标题：虚线收尾 */
 .markdown-content h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 1.5rem 0 0.8rem;
+  font-size: 1.24em;
+  letter-spacing: 0.02em;
+  margin: 2rem 0 0.85rem;
+  padding-bottom: 0.32em;
+  border-bottom: 1px dashed var(--paper-edge);
 }
 
+/* 四级标题：黛青小方点 */
 .markdown-content h4 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 1.2rem 0 0.6rem;
+  font-size: 1.08em;
+  color: var(--dai);
+  margin: 1.6rem 0 0.6rem;
+}
+
+.markdown-content h4::before {
+  content: "";
+  display: inline-block;
+  width: 0.46em;
+  height: 0.46em;
+  margin-right: 0.5em;
+  border-radius: 1px;
+  background: var(--dai);
+  transform: translateY(-0.08em);
 }
 
 .markdown-content h5 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 1rem 0 0.5rem;
+  font-size: 1em;
+  color: var(--ink-soft);
+  letter-spacing: 0.08em;
+  margin: 1.4rem 0 0.5rem;
 }
 
 .markdown-content h6 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 1rem 0 0.5rem;
+  font-size: 0.92em;
+  color: var(--ink-mute);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  margin: 1.2rem 0 0.4rem;
 }
 
 .markdown-content p {
-  margin: 0.8rem 0;
+  margin: 0.95em 0;
   text-align: justify;
 }
 
@@ -71,11 +115,9 @@
   color: var(--text-color);
 }
 
-/* 正文链接：文字下方常显细实线下划线（固定 1px，比浏览器默认的线宽更细；下划线也上提了一些），
-   颜色用 inherit 跟随所在容器的文字色：普通正文就是 --text-color，而自带颜色的语法
-   （引用块 #666 / 暗色 #aaa、彩虹文字 transparent、admonition 标题等）会自然生效，
-   不会被这里的规则覆盖；悬停时整条链接连同下划线变为主题蓝并略微透明。
-   用 text-decoration 实现（不用伪元素）：下划线随文字换行自然断开，字号变化也跟着走。
+/* 正文链接：黛青字 + 一道更淡的黛青细下划线，悬停整体转朱砂。
+   这里不再用 inherit 取色——宣纸主题里链接就该显色，好跟正文的墨色分开。
+   下划线用 text-decoration 实现（不用伪元素）：随文字换行自然断开，字号变化也跟着走。
    注：脚注引用 / 回跳等自身带 !important 的链接不受影响（见 Markdown.astro）；
    卡片类链接（.card-github / .card-music）带 .no-styling，不在下面的选择器范围内。 */
 .markdown-content p a,
@@ -91,12 +133,12 @@
 .markdown-content figcaption a,
 .markdown-content .quote a,
 .markdown-content .admonition-title a {
-  color: inherit;
+  color: var(--dai);
   text-decoration: underline;
-  text-decoration-color: currentColor;
+  text-decoration-color: color-mix(in srgb, var(--dai) 38%, transparent);
   text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-  transition: opacity 0.3s ease, color 0.3s ease;
+  text-underline-offset: 3px;
+  transition: color 0.18s ease, text-decoration-color 0.18s ease, text-underline-offset 0.18s ease;
 }
 
 .markdown-content p a:hover,
@@ -112,8 +154,10 @@
 .markdown-content figcaption a:hover,
 .markdown-content .quote a:hover,
 .markdown-content .admonition-title a:hover {
-  color: var(--link-color);
-  opacity: 0.8;
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+  /* 墨线轻挑：悬停时下划线浮起一点，像笔尖提了提笔 */
+  text-underline-offset: 5px;
 }
 
 /* 彩虹文字里的链接：文字必须保持透明才能露出渐变，所以下划线单独给主题蓝，避免整条链接
@@ -149,98 +193,190 @@
   opacity: 0.8;
 }
 
-.markdown-content strong {
-  font-weight: 700;
+/* 加粗：调用真字面（西文 EB Garamond SemiBold / 中文霞鹜文楷 Medium），
+   不让浏览器合成粗体，字号也不加重，保持正文的呼吸感。表格表头同此处理 */
+.markdown-content strong,
+.markdown-content b {
+  font-family: var(--serif-strong);
+  font-weight: 500;
+  color: var(--ink-strong);
 }
 
-.markdown-content em {
+/* 斜体：西文用 EB Garamond 的真斜体；中文因为禁用了合成斜体、而文楷没有斜体字面，
+   自动保持正体楷书——恰好合中文「不用斜体」的传统 */
+.markdown-content em,
+.markdown-content i,
+.markdown-content cite,
+.markdown-content dfn {
   font-style: italic;
+  font-synthesis: weight;
+}
+
+/* 高亮：藤黄（淡）底，不做荧光笔那种刺眼的黄 */
+.markdown-content mark {
+  background: var(--gold-soft);
+  color: inherit;
+  padding: 0 0.18em;
+  border-radius: 2px;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 1rem 0;
+  padding-left: 1.7rem;
 }
 
 .markdown-content ul {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
   list-style-type: disc;
 }
 
 .markdown-content ol {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
   list-style-type: decimal;
 }
 
 .markdown-content li {
-  margin: 0.3rem 0;
+  margin: 0.35em 0;
 }
 
 .markdown-content li::marker {
   transition: color 0.2s ease;
 }
 
-.markdown-content li:hover::marker {
-  color: var(--link-color);
+/* 标记分层着色：一级圆点朱砂，有序列表与二级转黛青，三级转藤黄（深） */
+.markdown-content ul > li::marker {
+  color: var(--accent);
+}
+
+.markdown-content ol > li::marker {
+  color: var(--dai);
+  font-weight: 500;
+}
+
+.markdown-content ul ul li::marker {
+  color: var(--dai);
+}
+
+.markdown-content ul ul ul li::marker {
+  color: var(--gold-deep);
 }
 
 .markdown-content li > ul,
 .markdown-content li > ol {
-  margin: 0;
+  margin: 0.35em 0;
 }
 
+/* 任务清单：方框自绘（去掉浏览器原生勾选框），选中时填朱砂 + 白勾 */
+.markdown-content ul.contains-task-list {
+  padding-left: 0.2rem;
+}
+
+.markdown-content li.task-list-item {
+  list-style: none;
+}
+
+.markdown-content input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 0.95em;
+  height: 0.95em;
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  vertical-align: -0.08em;
+  border: 1px solid var(--paper-edge);
+  border-radius: 2px;
+  background-color: var(--paper-sheet);
+}
+
+.markdown-content input[type="checkbox"]:checked {
+  border-color: var(--accent);
+  background-color: var(--accent);
+}
+
+.markdown-content input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  width: 0.2em;
+  height: 0.42em;
+  border: solid var(--paper-sheet);
+  border-width: 0 1.5px 1.5px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* 引用：一道朱砂左标 + 从朱砂向右淡出的底色。
+   嵌套二层转黛青、三层转藤黄，层级一眼可分 */
 .markdown-content blockquote {
-  font-family: "LXGW Bright Medium";
-  margin: 1.5rem 0;
-  padding: 0.1rem 1.2rem;
-  border-left: 4px solid var(--quote-left-color);
-  background-color: rgba(0, 0, 0, 0.03);
-  color: #666;
+  margin: 1.4em 0;
+  padding: 0.85em 1.25em;
+  color: var(--ink-soft);
+  background: linear-gradient(90deg, var(--accent-soft), rgba(178, 58, 46, 0) 72%);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 3px 3px 0;
 }
 
-[data-theme="dark"] .markdown-content blockquote {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #aaa;
+.markdown-content blockquote > p:first-child {
+  margin-top: 0;
 }
 
+.markdown-content blockquote > p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content blockquote blockquote {
+  margin: 0.7em 0;
+  background: linear-gradient(90deg, var(--dai-soft), rgba(60, 91, 111, 0) 72%);
+  border-left-color: var(--dai);
+}
+
+.markdown-content blockquote blockquote blockquote {
+  background: linear-gradient(90deg, var(--gold-soft), rgba(214, 178, 74, 0) 72%);
+  border-left-color: var(--gold-deep);
+}
+
+/* 行内代码：一张小纸签——暖底 + 一道纸色细边 + 朱砂偏暗的字色 */
 .markdown-content p code,
 .markdown-content li code,
+.markdown-content h1 code,
 .markdown-content h2 code,
 .markdown-content h3 code,
+.markdown-content h4 code,
+.markdown-content h5 code,
+.markdown-content h6 code,
 .markdown-content table code {
-  padding: 0.2rem 0.4rem;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  font-family: 'JetBrains Mono Variable', ui-monospace;
-  font-size: 0.9em;
+  font-family: var(--mono);
+  font-size: 0.88em;
+  color: var(--code-inline-ink);
+  background: var(--code-inline-bg);
+  border: 1px solid var(--code-inline-border);
+  border-radius: 3px;
+  padding: 0.12em 0.36em;
+  word-break: break-word;
 }
 
-
-[data-theme="dark"] .markdown-content p code,
-[data-theme="dark"] .markdown-content li code,
-[data-theme="dark"] .markdown-content h2 code,
-[data-theme="dark"] .markdown-content h3 code,
-[data-theme="dark"] .markdown-content table code {
-  background-color: rgba(255, 255, 255, 0.1);
-}
 
 /* 代码块由 Expressive Code 渲染（样式见构建产物 /_astro/ec.*.css，配置见 ec.config.mjs），
    下面这些规则只用于兜底（正文里手写的 <pre>），因此排除 .expressive-code 内部 */
 .markdown-content pre:not(.expressive-code pre) {
-  margin: 0.5rem 0;
-  padding: 1rem;
+  margin: 1.4em 0;
+  padding: 1.05em 1.2em;
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 6px;
-  font-family: 'JetBrains Mono Variable', ui-monospace;
-  line-height: 1.5;
-}
-
-[data-theme="dark"] .markdown-content pre:not(.expressive-code pre) {
-  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--code-ink);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-left: 3px solid var(--code-rail);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.875em;
+  line-height: 1.7;
 }
 
 .markdown-content pre code {
   padding: 0;
   background: none;
-  font-size: 0.9rem;
+  border: 0;
+  font-size: inherit;
 }
 
 /* 代码块与正文的间距（EC 不设置外边距） */
@@ -248,40 +384,63 @@
   margin: 1.25rem 0;
 }
 
+/* 分割线：一条中间偏藤黄的分色带，比一道实心墨线轻 */
 .markdown-content hr {
-  margin: 2rem 0;
-  border: none;
-  border-top: 1px solid var(--border-color);
+  margin: 2.6em 0;
+  padding: 0;
+  border: 0;
+  height: 1px;
+  overflow: visible;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--paper-edge) 14%,
+    var(--gold-deep) 50%,
+    var(--paper-edge) 86%,
+    transparent
+  );
 }
 
 .markdown-content table {
   width: 100%;
-  margin: 1.5rem 0;
+  max-width: 100%;
+  margin: 1.5em 0;
   border-collapse: collapse;
   border-spacing: 0;
+  font-size: 0.95em;
+  word-break: initial;
+}
+
+.markdown-content th,
+.markdown-content td {
+  padding: 0.55em 0.85em;
+  border: 1px solid var(--paper-edge);
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-content thead {
+  background: color-mix(in srgb, var(--gold) 22%, var(--paper-sheet));
+}
+
+.markdown-content th {
+  /* 表头与正文加粗同样调用真字面：西文 EB Garamond SemiBold，中文文楷 Medium */
+  font-family: var(--serif-strong);
+  font-weight: 500;
+  color: var(--ink-strong);
+  border-bottom: 2px solid color-mix(in srgb, var(--gold-deep) 55%, var(--paper-sheet));
 }
 
 .markdown-content tbody tr {
   transition: background-color 0.2s ease;
 }
 
+.markdown-content tbody tr:nth-child(2n) {
+  background-color: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
 .markdown-content tbody tr:hover {
-  background-color: var(--button-hover-color)
-}
-
-.markdown-content th,
-.markdown-content td {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-}
-
-.markdown-content th {
-  font-weight: 600;
-  background-color: rgba(0, 0, 0, 0.03);
-}
-
-[data-theme="dark"] .markdown-content th {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--accent-soft);
 }
 
 .markdown-content img {
@@ -289,7 +448,31 @@
   height: auto;
   margin: 1rem auto;
   display: block;
-  border-radius: 6px;
+  /* 白底截图与宣纸色太接近，需要一道纸色细边做分离；不用投影 */
+  border: 1px solid var(--paper-edge);
+  border-radius: 3px;
+}
+
+/* 图注装裱：Markdown.astro 的脚本把「一段一图 + alt」升格成 figure.xuan-captioned，
+   alt 落成图注小字——像画上题的那一行款识。灯箱会读 figcaption。
+   注意别写成裸 figure：Expressive Code 的代码块框也是 figure。 */
+.markdown-content figure.xuan-captioned {
+  margin: 1.4rem auto;
+  text-align: center;
+}
+
+.markdown-content figure.xuan-captioned img {
+  margin-bottom: 0.55rem;
+}
+
+.markdown-content figure.xuan-captioned figcaption {
+  font-family: var(--serif);
+  font-size: 0.86rem;
+  letter-spacing: 0.05em;
+  line-height: 1.5;
+  color: var(--ink-mute);
+  max-width: 85%;
+  margin: 0 auto;
 }
 
 /* 连续图片自动拼图（插件 src/plugins/rehype-image-collage.mjs，开关见 siteConfig.theme.imageCollage）
@@ -320,7 +503,7 @@
   flex: none;
   height: var(--collage-row-height);
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 4px;
   background: var(--button-hover-color);
 }
 
@@ -370,89 +553,61 @@
   }
 }
 
-.markdown-content hr {
-  margin: 2rem 0;
-  border: none;
-  height: 1px;
-  background: var(--text-color);
-}
+/* （hr 已在上面的表格之前统一定义为分色带，这里原先还有一条把 hr 画成实心墨线的重复规则，已删除） */
 
+/* 提示框：纸色底 + 虚线纸边，只留左边一道彩色实线区分类型（同宣纸主题的 alert 处理） */
 .note, .tip, .warning, .important, .caution {
   padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
   margin: 1rem 0;
-  /* border-left: 6px solid; */
+  border: 1px dashed var(--paper-edge);
+  border-left: 3px solid;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.018);
 }
 
-.note {
-  border-color: #757575; /* Indigo */
-  background: #eeeeee;
-}
+.note      { border-left-color: var(--dai); }
+.tip       { border-left-color: #4f6b33; }
+.important { border-left-color: #8b2671; } /* 青莲，取自 zhongguose.com */
+.warning   { border-left-color: #9a6a1a; }
+.caution   { border-left-color: var(--accent); }
 
-.tip {
-  border-color: #009400; /* Emerald */
-  background: #e6f6e6;
-}
-
-.important {
-  border-color: #4cb3d4; /* Red */
-  background: #eef9fd;
-}
-
-.warning {
-  border-color: #e6a700; /* Amber */
-  background: #fff7ed;
-}
-
-.caution {
-  border-color: #e13238; /* Yellow */
-  background: #ffebec;
-}
-
-[data-theme="dark"] .note {
-  border-color: #757575; /* Indigo */
-  background: #2d2d2d;
-}
-
-[data-theme="dark"] .tip {
-  border-color: #009400; /* Emerald */
-  background: #1a2e1a;
-}
-
-[data-theme="dark"] .important {
-  border-color: #4cb3d4; /* Red */
-  background: #1a2d33;
-}
-
-[data-theme="dark"] .warning {
-  border-color: #e6a700; /* Amber */
-  background: #332a00;
-}
-
+[data-theme="dark"] .note,
+[data-theme="dark"] .tip,
+[data-theme="dark"] .important,
+[data-theme="dark"] .warning,
 [data-theme="dark"] .caution {
-  border-color: #e13238; /* Yellow */
-  background: #3b1d1e;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .admonition-title {
-  font-weight: bold;
+  /* 同正文加粗：调用真字面而不是让浏览器合成粗体 */
+  font-family: var(--serif-strong);
+  font-weight: 500;
   font-size: large;
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
 }
 
-.note .admonition-title      { color: #474747; }
-.tip .admonition-title       { color: #003100; }
-.important .admonition-title { color: #193c47; }
-.warning .admonition-title   { color: #92400e; }
-.caution .admonition-title   { color: #4b1113; }
+.note .admonition-title      { color: var(--dai); }
+.tip .admonition-title       { color: #4f6b33; }
+.important .admonition-title { color: #8b2671; }
+.warning .admonition-title   { color: #9a6a1a; }
+.caution .admonition-title   { color: var(--accent); }
 
-[data-theme="dark"] .note .admonition-title      { color: #c7c7c7; }
-[data-theme="dark"] .tip .admonition-title       { color: #a8e6a8; }
-[data-theme="dark"] .important .admonition-title { color: #a3d9e9; }
-[data-theme="dark"] .warning .admonition-title   { color: #f2d680; }
-[data-theme="dark"] .caution .admonition-title   { color: #f2a0a3; }
+/* 暗色下这四个原色太暗，各提亮一档；左边线跟着标题一起提亮，否则会暗出一档 */
+[data-theme="dark"] .tip       { border-left-color: #8db366; }
+[data-theme="dark"] .important { border-left-color: #b08cc4; }
+[data-theme="dark"] .warning   { border-left-color: #d9a441; }
+
+[data-theme="dark"] .note .admonition-title      { color: #7ba3bb; }
+[data-theme="dark"] .tip .admonition-title       { color: #8db366; }
+[data-theme="dark"] .important .admonition-title { color: #b08cc4; }
+[data-theme="dark"] .warning .admonition-title   { color: #d9a441; }
+[data-theme="dark"] .caution .admonition-title   { color: var(--accent); }
+
+/* 图标是写死颜色的 data-URI，暗色下统一提亮一档，免得比标题还暗（省得为每个类型再抄一份 SVG） */
+[data-theme="dark"] .admonition-title::before { filter: brightness(1.75) saturate(0.92); }
 
 .admonition-title::before {
   display: inline-block;
@@ -466,19 +621,19 @@
 }
 
 .note .admonition-title::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23757575'%3E%3Cpath d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%233c5b6f'%3E%3Cpath d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E");
 }
 .tip .admonition-title::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23009400'%3E%3Cpath d='M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%234f6b33'%3E%3Cpath d='M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z'%3E%3C/path%3E%3C/svg%3E");
 }
 .important .admonition-title::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%234cb3d4'%3E%3Cpath d='M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%237a4b8a'%3E%3Cpath d='M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'%3E%3C/path%3E%3C/svg%3E");
 }
 .warning .admonition-title::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23e6a700'%3E%3Cpath d='M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%239a6a1a'%3E%3Cpath d='M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'%3E%3C/path%3E%3C/svg%3E");
 }
 .caution .admonition-title::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23e13238'%3E%3Cpath d='M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23b23a2e'%3E%3Cpath d='M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E");
 }
 
 
@@ -488,7 +643,7 @@
     width: 100%;
     max-width: 400px;
     margin: 1.5rem auto;
-    border-radius: 12px;
+    border-radius: 4px;
     /* box-shadow: 0 4px 12px var(--shadow-color); */
     text-decoration: none;
     transition: all 0.8s ease !important; 
@@ -520,7 +675,7 @@
 .music-cover {
     width: 100%;
     height: 100%;
-    border-radius: 8px;
+    border-radius: 3px;
     background-size: cover;
     background-position: center;
     background-color: var(--button-hover-color);
@@ -578,21 +733,18 @@
 
 
 [data-theme="dark"] .music-title {
-    color: #ffffff;
+    color: var(--ink-strong);
 }
 
 [data-theme="dark"] .music-artist {
-    color: #aaa;
+    color: var(--ink-mute);
 }
 
+/* 远端数据拉取失败时的兜底卡片：沿用朱砂系的告警令牌，别用原来那套粉红 */
 .fetch-error {
-  background-color: #ffe6e6;
-  border: 1px solid #ffcccc;
-}
-
-[data-theme="dark"] .fetch-error {
-  background-color: #4d2626;
-  border-color: #733030;
+  background-color: var(--danger-bg-color);
+  border: 1px solid var(--danger-border-color);
+  color: var(--danger-text-color);
 }
 
 
@@ -600,7 +752,7 @@
 .card-github {
     display: block;
     padding: 16px;
-    border-radius: 8px;
+    border-radius: 4px;
     /* box-shadow: 0 4px 12px var(--shadow-color); */
     text-decoration: none;
     transition: all 0.8s ease !important;
@@ -721,7 +873,7 @@
 .card-github .gc-license {
     margin-left: auto;
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: 4px;
     font-size: 0.8em;
     background: var(--button-hover-color);
 }
@@ -729,7 +881,7 @@
 .card-github .gc-language {
     display: inline-block;
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: 4px;
     font-size: 0.8em;
     background: var(--button-hover-color);
     margin-left: 8px;
@@ -746,12 +898,13 @@
 }
 
 .quote {
-    font-family: "LXGW Bright Medium";
+    font-family: var(--serif);
     position: relative;
     padding: 0 3rem;
 	  margin: 3.5rem 0;
     line-height: 1.6;
     text-align: center;
+    color: var(--ink-soft);
 }
 
 div.quote::before, 
@@ -817,7 +970,7 @@ ruby {
 
 rt {
   font-size: 0.65em;  
-  color: #888;   
+  color: var(--ink-mute);   
   user-select: none;  
   transform: translateY(-2px); 
 }
@@ -857,8 +1010,8 @@ rt {
 .typst-render .typst-title {
   margin-top: 0.8rem;
   font-size: 0.9rem;
-  color: #666;
-  font-family: 'Times New Roman', Times, serif;
+  color: var(--ink-soft);
+  font-family: var(--serif);
 }
 
 .underline-text {
@@ -878,4 +1031,19 @@ rt {
 
 .lqip-markdown-img.lqip-loaded {
   background: transparent;
+}
+
+/* ===========================================================================
+ * 雕版界栏（试探版）：文章正文外围一圈极淡的界格
+ * 只给加了 .xuan-banxin 的正文用（博客文章页），关于页等不受影响。
+ * 双线：外圈一道 hairline，内圈隔 3px 再一道更淡的——雕版书版心的双栏。
+ * =========================================================================== */
+.markdown-content.xuan-banxin {
+    position: relative;
+    border: 1px solid color-mix(in srgb, var(--paper-edge) 85%, transparent);
+    outline: 1px solid color-mix(in srgb, var(--paper-edge) 45%, transparent);
+    outline-offset: 3px;
+    padding: clamp(0.9rem, 3vw, 1.7rem) clamp(0.85rem, 2.6vw, 1.6rem);
+    margin-top: 1.25rem;
+    border-radius: 0;
 }

@@ -1,0 +1,224 @@
+---
+// Festival.astro —— 传统节日的界面挂件
+//
+// 春节 / 元宵：页面两侧各挂一盏灯笼，随风轻摆
+// 端午 / 七夕 / 中秋 / 重阳：右上挂一枚竖排题签
+//
+// 节日判断在 @utils/festivals（走浏览器内置的农历），这里只负责画与显隐。
+// 只在 ≥1200px 显示：窄屏顶栏占满整宽，挂件会压到 logo 与工具按钮上。
+---
+
+<div id="xuan-festival" aria-hidden="true">
+    <div class="lantern lantern-left">
+        <span class="lantern-cord"></span>
+        <span class="lantern-body"><span class="lantern-glyph">春</span></span>
+        <span class="lantern-tassel"></span>
+    </div>
+    <div class="lantern lantern-right">
+        <span class="lantern-cord"></span>
+        <span class="lantern-body"><span class="lantern-glyph">春</span></span>
+        <span class="lantern-tassel"></span>
+    </div>
+    <div class="fest-tag"><span class="fest-tag-text">新春</span></div>
+</div>
+
+<style>
+    #xuan-festival {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        pointer-events: none;
+    }
+    /* 默认都不显示，由脚本按节日加上 ornament-* 再放出来 */
+    .lantern,
+    .fest-tag {
+        display: none;
+    }
+    #xuan-festival.ornament-lantern .lantern,
+    #xuan-festival.ornament-tag .fest-tag {
+        display: block;
+    }
+
+    /* ---------- 灯笼 ---------- */
+    .lantern {
+        position: absolute;
+        top: 0;
+        width: 54px;
+        transform-origin: 50% 0;
+        animation: xuan-lantern-sway 5.4s ease-in-out infinite;
+    }
+    .lantern-left {
+        left: 3.2vw;
+    }
+    .lantern-right {
+        right: 3.2vw;
+        /* 两盏不同步才像有风，不是机械摆动 */
+        animation-duration: 6.3s;
+        animation-delay: -2.6s;
+    }
+    .lantern-cord {
+        display: block;
+        width: 1px;
+        height: 58px;
+        margin: 0 auto;
+        background: linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--ink-mute) 50%, transparent),
+            color-mix(in srgb, var(--ink-mute) 22%, transparent)
+        );
+    }
+    .lantern-body {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 54px;
+        height: 62px;
+        border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
+        /* 竹篾：等距竖纹 + 中心偏上的高光，让它看起来是「鼓」的 */
+        background:
+            repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.1) 0 1px, transparent 1px 13px),
+            radial-gradient(circle at 34% 30%, #e8574a, #c0392b 58%, #96271c);
+        box-shadow:
+            0 3px 12px color-mix(in srgb, #96271c 30%, transparent),
+            inset 0 0 12px rgba(255, 202, 122, 0.28);
+    }
+    .lantern-body::before,
+    .lantern-body::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        width: 16px;
+        height: 5px;
+        transform: translateX(-50%);
+        border-radius: 2px;
+        background: linear-gradient(90deg, #8f6a1e, #d6b24a 45%, #8f6a1e);
+    }
+    .lantern-body::before {
+        top: -3px;
+    }
+    .lantern-body::after {
+        bottom: -3px;
+    }
+    .lantern-glyph {
+        font-family: var(--serif-head);
+        font-size: 27px;
+        line-height: 1;
+        color: #fdf3d0;
+        text-shadow: 0 0 9px rgba(255, 214, 130, 0.55);
+    }
+    .lantern-tassel {
+        position: relative;
+        width: 2px;
+        height: 26px;
+        margin: 5px auto 0;
+        border-radius: 1px;
+        background: linear-gradient(to bottom, #d6b24a, color-mix(in srgb, #d6b24a 35%, transparent));
+    }
+    .lantern-tassel::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 7px;
+        height: 7px;
+        margin-left: -3.5px;
+        border-radius: 50%;
+        background: #b99a3d;
+    }
+    @keyframes xuan-lantern-sway {
+        0%,
+        100% {
+            transform: rotate(-3.2deg);
+        }
+        50% {
+            transform: rotate(3.2deg);
+        }
+    }
+
+    /* ---------- 题签 ---------- */
+    .fest-tag {
+        position: absolute;
+        top: 88px;
+        right: 2.6vw;
+        padding: 15px 7px 16px;
+        border: 1px solid color-mix(in srgb, var(--fest-accent, var(--accent)) 42%, var(--paper-edge));
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--paper-sheet) 86%, transparent);
+        box-shadow: 0 3px 12px color-mix(in srgb, var(--shadow-color) 55%, transparent);
+        animation: xuan-tag-in 0.7s ease-out both;
+    }
+    .fest-tag-text {
+        display: block;
+        writing-mode: vertical-rl;
+        font-family: var(--serif-head);
+        font-size: 15px;
+        letter-spacing: 0.24em;
+        color: var(--ink-strong);
+    }
+    /* 签脚一颗小方点，用节日主色 */
+    .fest-tag::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: 5px;
+        width: 5px;
+        height: 5px;
+        margin-left: -2.5px;
+        border-radius: 1px;
+        background: var(--fest-accent, var(--accent));
+    }
+    @keyframes xuan-tag-in {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    /* 窄屏顶栏占满整宽，挂件会压到 logo 与工具按钮。
+       1280 是算过的：此时顶栏左右各留 128px，灯笼占 41+54=95px，刚好不打架 */
+    @media (max-width: 1279px) {
+        #xuan-festival {
+            display: none;
+        }
+    }
+    /* 减弱动态：不摆，只挂着 */
+    @media (prefers-reduced-motion: reduce) {
+        .lantern {
+            animation: none;
+        }
+        .fest-tag {
+            animation: none;
+        }
+    }
+</style>
+
+<script>
+import { registerPageInit } from '@utils/pageInit'
+import { getFestival, getFestivalCard } from '@utils/festivals'
+
+function setup() {
+    const root = document.getElementById('xuan-festival')
+    if (!root) return
+    // ?term=中秋 也能预览挂件，和背景动效共用一个钩子
+    const forced = new URLSearchParams(location.search).get('term')
+    const fest = (forced ? getFestivalCard(forced) : null) ?? getFestival(new Date())
+    if (!fest) {
+        root.className = 'xuan-festival'
+        return
+    }
+    root.className = `xuan-festival ornament-${fest.ornament}`
+    root.style.setProperty('--fest-accent', fest.accent)
+    const tag = root.querySelector('.fest-tag-text')
+    if (tag) tag.textContent = fest.tag
+    const glyph = fest.glyph ?? fest.tag.slice(0, 1)
+    root.querySelectorAll('.lantern-glyph').forEach((el) => {
+        el.textContent = glyph
+    })
+}
+
+registerPageInit(setup)
+</script>

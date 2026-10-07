@@ -1,0 +1,116 @@
+/* ===========================================================================
+ * 打印样式
+ * ---------------------------------------------------------------------------
+ * 把文章打成纸读时的排版：白纸黑字，屏幕专属的层全部退场。
+ * 只在 @media print 内生效，不影响屏幕显示。
+ * =========================================================================== */
+@media print {
+
+    /* ---- 屏幕专属元素退场 ----------------------------------------------
+       顶栏/导航、阅读进度线、浮尘画布、固定背景层、书脊、悬浮菜单、
+       搜索弹窗、移动端抽屉、加载遮罩、打字机笔尖 */
+    #main-header,
+    #nav-bar,
+    #read-progress,
+    #xuan-motes,
+    #loading-overlay,
+    #fabMenu,
+    #search-modal,
+    #mobile-menu-container,
+    .xuan-backdrop,
+    .xuan-spine,
+    #xuan-festival,
+    .daily-cursor,
+    aside {
+        display: none !important;
+    }
+
+    /* ---- 纸与墨 ----------------------------------------------------------
+       背景层隐藏后，正文直接落在白纸上；AOS 元素若还没滚到就是 opacity:0，
+       打印会整段消失，这里强制显形 */
+    html,
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+
+    [data-aos] {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    @page {
+        margin: 18mm 16mm;
+    }
+
+    .markdown-content {
+        font-size: 12pt;
+        line-height: 1.8;
+    }
+
+    /* 链接在纸上不可点，把地址印在后面（只印外部链接，站内锚点不印） */
+    .markdown-content a {
+        color: #000 !important;
+        text-decoration: underline !important;
+    }
+
+    .markdown-content a[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.78em;
+        color: #555;
+        word-break: break-all;
+    }
+
+    /* 代码块：EC 的深色主题打印出来是一滩黑，压成白纸黑字 */
+    .expressive-code,
+    .expressive-code * {
+        background: #fff !important;
+        color: #111 !important;
+        text-shadow: none !important;
+        border-color: #bbb !important;
+        box-shadow: none !important;
+    }
+
+    .markdown-content pre:not(.expressive-code pre),
+    .markdown-content p code,
+    .markdown-content li code {
+        background: #fff !important;
+        border: 1px solid #bbb !important;
+        color: #111 !important;
+    }
+
+    .markdown-content img {
+        max-width: 100%;
+        break-inside: avoid;
+    }
+
+    /* 排版规则：标题不孤行，代码/表格/卡片不断开 */
+    h1, h2, h3, h4, h5, h6 {
+        break-after: avoid;
+        color: #000 !important;
+    }
+
+    pre, table, figure, .card-github, .card-music {
+        break-inside: avoid;
+    }
+
+    /* 卡片阴影去掉；页脚保留版权一行 */
+    .post-card-wrap, .card-github, .card-music, .license-card {
+        filter: none !important;
+        box-shadow: none !important;
+        border-color: #bbb !important;
+    }
+    .xuan-paper {
+        clip-path: none !important;
+        border: 1px solid #bbb !important;
+    }
+
+    footer a::after {
+        content: none !important;
+    }
+
+    /* 卷前/卷后是屏幕上的导航，纸上没有「点击」 */
+    .blognavi {
+        display: none !important;
+    }
+}

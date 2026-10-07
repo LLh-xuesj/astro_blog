@@ -172,6 +172,20 @@ function initSearchModal() {
   const onKeyDown = (e) => {
     if (e.key === 'Escape' && !searchModal.classList.contains('opacity-0')) {
       closeModal();
+      return;
+    }
+    // 快捷键呼出：`/`（GitHub 风格）与 Ctrl/⌘+K。
+    // 正在输入时不抢 `/`；Ctrl+K 是浏览器聚焦地址栏的默认键，需要 preventDefault。
+    const target = document.activeElement;
+    const isTyping = target && (/^(input|textarea|select)$/i.test(target.tagName) || target.isContentEditable);
+    const isOpen = !searchModal.classList.contains('opacity-0');
+    if (isOpen) return;
+    if (e.key === '/' && !isTyping) {
+      e.preventDefault();
+      openModal();
+    } else if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      openModal();
     }
   };
   document.addEventListener('keydown', onKeyDown);

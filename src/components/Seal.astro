@@ -1,0 +1,41 @@
+---
+// Seal.astro —— 「宣」字印章（朱砂底 + 挖白字）
+//
+// 这是 Xuan 主题的落款标记：站名旁边、页脚版权前各盖一枚。
+// 字走 var(--serif-head)（京华老宋体），颜色走 --accent / --paper-sheet，
+// 所以明暗两套自动跟着走，不用另配。
+interface Props {
+    size?: string; // 任意 CSS 长度；默认按父级字号缩放，好跟站名一起变大变小
+    rotate?: number; // 微微歪一点，像真盖上去的
+    label?: string; // 印章里的字
+    class?: string;
+}
+const { size = '0.82em', rotate = -3, label = '宣', class: className = '' } = Astro.props;
+---
+
+<svg
+    class:list={['xuan-seal', className]}
+    viewBox="0 0 100 100"
+    style={`width:${size};height:${size};transform:rotate(${rotate}deg)`}
+    aria-hidden="true"
+    focusable="false"
+>
+    <rect class="seal-body" x="2" y="2" width="96" height="96" rx="13"></rect>
+    <text class="seal-text" x="50" y="53" text-anchor="middle" dominant-baseline="central" font-size="66">{label}</text>
+</svg>
+
+<style>
+    .xuan-seal {
+        display: inline-block;
+        flex: none;
+        vertical-align: -0.06em;
+    }
+    .seal-body {
+        fill: var(--accent);
+    }
+    .seal-text {
+        fill: var(--paper-sheet);
+        font-family: var(--serif-head);
+        font-weight: 400;
+    }
+</style>

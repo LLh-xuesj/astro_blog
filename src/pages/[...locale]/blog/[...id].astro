@@ -5,6 +5,7 @@ import MainPageLayout from '@layouts/MainPageLayout.astro'
 import Markdown from '@components/misc/Markdown.astro'
 import ImageModule from '@components/misc/ImageModule.astro'
 import FabMenu from '@components/control/FabMenu.astro'
+import SignOff from '@components/SignOff.astro'
 import TOC from '@components/TOC.svelte'
 import LicenseCard from '@components/misc/LicenseCard.astro'
 import Comments from '@components/comment/Comments.svelte'
@@ -18,6 +19,7 @@ import { Icon } from "astro-icon/components";
 
 import { blogCoverUrl } from '@utils/urlUtils'
 import { formatFullDate } from '@/utils/time'
+import { cnReadingTime } from '@utils/cnText'
 import { getBlogEntrySort } from '@utils/contentUtils'
 import { getRelativeLocaleUrl } from '@utils/urlUtils';
 import { absoluteUrl, articleJsonLd, coverShareImage, normalizePath } from '@utils/seo';
@@ -104,17 +106,24 @@ const postJsonLd = articleJsonLd({
             <div class="flex justify-center">
                 <div class="flex flex-wrap items-center justify-center text-sm text-[var(--text-color-70)] mt-2 gap-2">
                     <p class="flex items-center whitespace-nowrap mr-2">
-                        <Icon name="fa6-solid:pen-nib" class="mr-1"></Icon> 
-                        <span class="py-1 px-1">{remarkPluginFrontmatter.words || 0} {t("pagecard.words")}</span>
+                        <Icon name="fa6-solid:pen-nib" class="mr-1"></Icon>
+                        <span class="py-1 px-1">{t("pagecard.readInfo", { words: remarkPluginFrontmatter.words || 0, minutes: cnReadingTime(remarkPluginFrontmatter.minutes || 0) })}</span>
                     </p>
                     <p class="flex items-center whitespace-nowrap mr-2">
-                        <Icon name="fa6-solid:clock" class="mr-1"></Icon> 
-                        <span class="py-1 px-1">{remarkPluginFrontmatter.minutes || 0} {t("pagecard.minutes")}</span>
-                    </p>
-                    <p class="flex items-center whitespace-nowrap mr-2">
-                        <Icon name="fa6-solid:hashtag" class="mr-1"></Icon> 
+                        <Icon name="fa6-solid:hashtag" class="mr-1"></Icon>
                         <a href={getRelativeLocaleUrl(currentLang, `/archives/?category=${entry.data.category}`)} class="category-tag">{entry.data.category || t("pagecard.uncategorized")}</a>
                     </p>
+                    <!-- 复制本文链接：点一下把永久地址抄进剪贴板，笔尖变对勾 -->
+                    <button
+                        id="copy-link"
+                        type="button"
+                        title={t("button.copyLink")}
+                        data-copied-text={t("pagecard.copied")}
+                        class="flex items-center whitespace-nowrap mr-2 transition-colors hover:text-[var(--accent)]"
+                    >
+                        <Icon name="fa6-solid:link" class="mr-1"></Icon>
+                        <span class="py-1 px-1">{t("button.copyLink")}</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -154,9 +163,10 @@ const postJsonLd = articleJsonLd({
             </div>
         </div>
         )}
-        <Markdown class="mb-6 mt-10 markdown-content">
+        <Markdown class="mb-8 mt-10 markdown-content xuan-banxin">
             <Content />
         </Markdown>
+        <SignOff name={profileConfig.name} date={entry.data.pubDate} />
         {licenseConfig.enable &&
         <LicenseCard title={entry.data.title} pubDate={entry.data.pubDate}/>
         }
@@ -176,6 +186,9 @@ const postJsonLd = articleJsonLd({
     <!-- fixed 浮层：留在 swup 容器内，但在淡入淡出元素之外（见 MainPageLayout 的说明）。
          这里不能用 <Fragment slot="overlay">：包一层普通 div 不会影响 fixed 定位。 -->
     <div slot="overlay">
+        <!-- 书脊：中文古籍的书名题在书脊上，这里把文章标题竖排立在页面左缘，
+             纯装饰（不可选中、不响应鼠标），宽屏才出现 -->
+        <div class="xuan-spine" aria-hidden="true">{entry.data.title}</div>
         {
             siteConfig.toc.enable &&
             <TOC headings={headings} language={currentLang} client:load/>
@@ -183,3 +196,58 @@ const postJsonLd = articleJsonLd({
         <FabMenu headings={headings} showComment={siteConfig.comments.enable} showBackBottom={!siteConfig.comments.enable}/>
     </div>
 </MainPageLayout>
+
+<script>
+    import { registerPageInit } from '@utils/pageInit';
+
+    // 复制本文链接：抄永久地址进剪贴板，按钮文案换成「已复制」1.6s 后还原。
+    // 页面脚本换页只跑一次，按钮在 swup 容器内每次重建，统一走 registerPageInit。
+    function setupCopyLink() {
+        const btn = document.getElementById('copy-link');
+        if (!btn || btn.dataset.bound === '1') return;
+        btn.dataset.bound = '1';
+
+        const label = btn.querySelector('span');
+        const original = label?.textContent ?? '';
+        btn.onclick = async () => {
+            try {
+                await navigator.clipboard.writeText(window.location.origin + window.location.pathname);
+                if (label) label.textContent = btn.dataset.copiedText || '✓';
+                setTimeout(() => { if (label) label.textContent = original; }, 1600);
+            } catch {
+                // 剪贴板权限被拒（非安全上下文等）：静默失败，别打扰阅读
+            }
+        };
+    }
+    registerPageInit(setupCopyLink);
+</script>
+
+<style>
+    /* 书脊：位于内容列左侧与 TOC 对称的位置；超长标题向下截断并做两端淡出 */
+    .xuan-spine {
+        display: none;
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        left: calc(50vw - var(--page-width) / 2 - 4.25rem);
+        writing-mode: vertical-rl;
+        max-height: min(60vh, 34rem);
+        overflow: hidden;
+        font-family: var(--serif-head);
+        font-size: 1.05rem;
+        letter-spacing: 0.32em;
+        line-height: 1;
+        color: var(--ink-soft);
+        opacity: 0.6;
+        pointer-events: none;
+        user-select: none;
+        -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+        mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+    }
+
+    @media (min-width: 1280px) {
+        .xuan-spine {
+            display: block;
+        }
+    }
+</style>

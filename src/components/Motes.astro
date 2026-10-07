@@ -1,0 +1,509 @@
+---
+// Motes.astro —— 随节气与节日呼吸的背景动效
+//
+// 一套引擎，二十四张节气卡 + 六张节日卡：
+//   · 每个节气 = 一张卡：动效原型 + 中国色（亮/暗两套）+ 密度/速度系数
+//   · 十种动效原型：尘光 / 雨丝 / 落花絮 / 雪 / 萤火 / 落叶 / 露珠 / 惊虫 / 麦浪 / 赤金尘
+//   · 传统节日（春节 / 元宵 / 端午 / 七夕 / 中秋 / 重阳）：优先级高于节气，
+//     配置在 @utils/festivals，界面挂件（灯笼 / 题签）在 @components/Festival
+// 骨架沿用：单 canvas、离屏 sprite、rAF、后台标签暂停、prefers-reduced-motion 全关、
+// 密度随屏幕面积自适应、移动端减量。
+//
+// 预览任意节气或节日：URL 加 ?term=雨水 / ?term=中秋（例如 /?term=大雪）
+---
+
+<canvas id="xuan-motes" aria-hidden="true"></canvas>
+
+<style>
+    #xuan-motes {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+    }
+</style>
+
+<script>
+import { registerPageInit } from '@utils/pageInit'
+import { getCurrentTerm } from '@utils/solarTerms'
+import { getFestival, getFestivalCard, type FestArch } from '@utils/festivals'
+
+type Arch = FestArch
+
+interface Card {
+    name: string
+    arch: Arch
+    /** 亮/暗两套中国色：[主色, 辅色]，取自 zhongguose.com 526 色库（色名见注释） */
+    light: [string, string]
+    dark: [string, string]
+    /** 密度系数（相对基准粒子数） */
+    density: number
+    /** 速度系数 */
+    speed: number
+}
+
+/* ---------------------------- 二十四节气配置卡 ---------------------------- */
+const CARDS: Record<string, Card> = {
+    立春: { name: '立春', arch: 'dust', light: ['#2f7d55', '#a8890f'], dark: ['#7ec89a', '#d2b116'], density: 0.8, speed: 1.1 }, // 葱绿·新禾绿——万物向上
+    雨水: { name: '雨水', arch: 'rain', light: ['#4a7a96', '#3c5b6f'], dark: ['#8abcd1', '#b0d5df'], density: 2.4, speed: 1.1 }, // 秋波蓝——细雨斜织
+    惊蛰: { name: '惊蛰', arch: 'insect', light: ['#8d8378', '#4a4035'], dark: ['#b3a897', '#e6ded0'], density: 0.5, speed: 1 }, // 鹤灰——虫豸急走急停
+    春分: { name: '春分', arch: 'petal', light: ['#d97f82', '#c0857a'], dark: ['#f0b0b2', '#f2d7cd'], density: 0.8, speed: 0.9 }, // 牡丹粉红·藕荷——中春花信
+    清明: { name: '清明', arch: 'rain', light: ['#5f6f7a', '#4a5a66'], dark: ['#9ab0bd', '#c2d4dc'], density: 1.8, speed: 0.8 }, // 雁灰——雨纷纷，更细更慢
+    谷雨: { name: '谷雨', arch: 'petal', light: ['#d9c3a8', '#d97f82'], dark: ['#fbeee2', '#f0c0ba'], density: 1, speed: 0.8 }, // 淡米粉——杨花落尽
+    立夏: { name: '立夏', arch: 'dust', light: ['#a8791c', '#6f675c'], dark: ['#d6b24a', '#e8c96a'], density: 1, speed: 1 }, // 沉金——夏日光尘
+    小满: { name: '小满', arch: 'wheat', light: ['#a8890f', '#8f6f24'], dark: ['#e0c04a', '#d6b24a'], density: 0.9, speed: 1 }, // 新禾绿——风过麦田
+    芒种: { name: '芒种', arch: 'rain', light: ['#3c5b6f', '#4a7a96'], dark: ['#8abcd1', '#b0d5df'], density: 2.6, speed: 1.15 }, // 淡蓝灰——黄梅时节家家雨
+    夏至: { name: '夏至', arch: 'firefly', light: ['#a8890f', '#7d8f2a'], dark: ['#d4e157', '#ffd54f'], density: 1.05, speed: 0.6 }, // 萤金——夜最长的萤
+    小暑: { name: '小暑', arch: 'firefly', light: ['#a8890f', '#7d8f2a'], dark: ['#d4e157', '#ffd54f'], density: 1.05, speed: 0.6 },
+    大暑: { name: '大暑', arch: 'dust', light: ['#a8791c', '#8f6f24'], dark: ['#ffd54f', '#d6b24a'], density: 1.05, speed: 1.15 }, // 藤黄——暑气蒸腾
+    立秋: { name: '立秋', arch: 'leaf', light: ['#cf8a26', '#a8621c'], dark: ['#e7a23f', '#f0b45a'], density: 0.3, speed: 0.8 }, // 凋叶棕——一叶知秋
+    处暑: { name: '处暑', arch: 'dust', light: ['#6f675c', '#7d7466'], dark: ['#b3a897', '#9a8f80'], density: 0.9, speed: 0.9 }, // 雁灰——秋高气爽
+    白露: { name: '白露', arch: 'dew', light: ['#6a90ad', '#587e9b'], dark: ['#a4c6e0', '#c0d8ea'], density: 0.55, speed: 0.3 }, // 星蓝——露从今夜白
+    秋分: { name: '秋分', arch: 'dust', light: ['#a8791c', '#6f675c'], dark: ['#d6b24a', '#e8c96a'], density: 1, speed: 1 }, // 沉金——桂子飘香
+    寒露: { name: '寒露', arch: 'dew', light: ['#5f93ad', '#4a7a96'], dark: ['#9ec9dd', '#bfe0ea'], density: 0.55, speed: 0.3 }, // 秋波蓝——寒露将霜
+    霜降: { name: '霜降', arch: 'leaf', light: ['#8f2d1e', '#6f1f14'], dark: ['#c65a44', '#e08a70'], density: 0.6, speed: 0.9 }, // 赭石·枣红——霜叶红于二月花
+    立冬: { name: '立冬', arch: 'dust', light: ['#7d7466', '#9a8f80'], dark: ['#b3a897', '#8b8175'], density: 0.7, speed: 0.8 }, // 银灰——冬日初静
+    小雪: { name: '小雪', arch: 'snow', light: ['#6f675c', '#8d8378'], dark: ['#eef7f2', '#ffffff'], density: 0.7, speed: 0.8 }, // 月白——初雪疏
+    大雪: { name: '大雪', arch: 'snow', light: ['#6f675c', '#8d8378'], dark: ['#eef7f2', '#ffffff'], density: 1.15, speed: 1 }, // 纷纷暮雪
+    冬至: { name: '冬至', arch: 'snow', light: ['#6f675c', '#8d8378'], dark: ['#eef7f2', '#ffffff'], density: 1, speed: 0.6 }, // 日短之至
+    小寒: { name: '小寒', arch: 'snow', light: ['#6f675c', '#8d8378'], dark: ['#eef7f2', '#ffffff'], density: 0.7, speed: 0.7 }, // 寒夜疏雪
+    大寒: { name: '大寒', arch: 'dust', light: ['#8d8378', '#6f675c'], dark: ['#8b8175', '#6f675c'], density: 0.5, speed: 0.5 }, // 月灰——岁末极静
+}
+
+/* 新春特例与传统节日都搬到了 @utils/festivals —— 农历判定与配色在那里维护，
+   这里只负责「拿今天的卡 + 画」。?term= 同时接受节气名与节日名（初六预览用）。 */
+
+function pickCard(now: Date): Card {
+    // 预览钩子：?term=雨水 / ?term=中秋
+    if (typeof location !== 'undefined') {
+        const q = new URLSearchParams(location.search).get('term')
+        if (q) {
+            const hit = CARDS[q] ?? getFestivalCard(q)
+            if (hit) return hit
+        }
+    }
+    // 节日优先于节气：过节那几天，节气的浮尘让位给节日的动效
+    return getFestival(now) ?? CARDS[getCurrentTerm(now).name] ?? CARDS['秋分']
+}
+
+function initMotes() {
+    // 减弱动态：一颗都不动
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const canvas = document.getElementById('xuan-motes') as HTMLCanvasElement | null
+    if (!canvas || canvas.dataset.bound) return
+    canvas.dataset.bound = '1'
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    let W = 0
+    let H = 0
+    const resize = () => {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2)
+        W = window.innerWidth
+        H = window.innerHeight
+        canvas.width = Math.round(W * dpr)
+        canvas.height = Math.round(H * dpr)
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+    resize()
+
+    // 离屏 sprite：光点类（尘光/雪/萤火/露珠/虫/麦浪/新春）共用
+    const makeSprite = (rgb: string) => {
+        const s = document.createElement('canvas')
+        s.width = s.height = 32
+        const c = s.getContext('2d')!
+        const g = c.createRadialGradient(16, 16, 0, 16, 16, 16)
+        g.addColorStop(0, `rgba(${rgb},1)`)
+        g.addColorStop(0.55, `rgba(${rgb},0.45)`)
+        g.addColorStop(1, `rgba(${rgb},0)`)
+        c.fillStyle = g
+        c.fillRect(0, 0, 32, 32)
+        return s
+    }
+    const hexToRgb = (hex: string) => {
+        const n = parseInt(hex.slice(1), 16)
+        return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`
+    }
+
+    let sprites: HTMLCanvasElement[] = []
+    let spriteKey = ''
+    const buildSprites = (card: Card, theme: 'light' | 'dark') => {
+        const key = card.name + theme
+        if (key === spriteKey) return
+        spriteKey = key
+        sprites = card[theme].map((hex) => makeSprite(hexToRgb(hex)))
+    }
+
+    const rand = (a: number, b: number) => a + Math.random() * (b - a)
+
+    interface Mote {
+        x: number
+        y: number
+        vx: number
+        vy: number
+        r: number
+        a: number
+        phase: number
+        sway: number
+        /** 摆动频率（Hz 量级）：每粒都不同，才不会整片粒子齐步走 */
+        swf: number
+        /** 横向漂移速度（px/s） */
+        swa: number
+        tw: number
+        rot: number
+        rv: number
+        kind: number
+        baseY: number
+        t: number
+        life: number
+        state: number
+    }
+
+    let motes: Mote[] = []
+    let lastArch: Arch | '' = ''
+    let currentCard: Card | null = null // 只给下面的调试句柄读
+
+    const spawn = (card: Card, anywhere: boolean): Mote => {
+        const m: Mote = {
+            x: rand(0, W),
+            y: anywhere ? rand(0, H) : rand(-H * 0.2, -10),
+            vx: 0,
+            vy: 0,
+            r: 1.4,
+            a: rand(0.22, 0.45),
+            phase: rand(0, Math.PI * 2),
+            sway: rand(0.15, 0.5),
+            // 每粒一套自己的摆动参数：摆动角频率 rad/s + 横漂幅度 px/s
+            swf: rand(0.8, 2.2),
+            swa: rand(6, 15),
+            tw: rand(0.4, 1.2),
+            rot: rand(0, Math.PI * 2),
+            rv: rand(-1.6, 1.6),
+            kind: Math.random() < 0.6 ? 0 : 1,
+            baseY: rand(H * 0.1, H * 0.9),
+            t: 0,
+            life: 1,
+            state: 0,
+        }
+        switch (card.arch) {
+            case 'dust':
+                m.r = rand(1.5, 3)
+                m.vy = -rand(10, 26)
+                break
+            case 'rain':
+                m.r = rand(8, 15)
+                m.vy = rand(520, 880)
+                m.vx = rand(-150, -70)
+                m.a = rand(0.3, 0.55)
+                break
+            case 'petal':
+                m.r = rand(1.6, 3.2)
+                m.vy = rand(34, 62)
+                m.swa = rand(7, 16)
+                break
+            case 'snow':
+                m.r = rand(1, 2.6)
+                m.vy = rand(26, 48)
+                m.swa = rand(5, 12)
+                m.a = rand(0.3, 0.55)
+                break
+            case 'firefly':
+                m.r = rand(1.4, 2.8)
+                m.vx = rand(-16, 16)
+                m.vy = rand(-11, 11)
+                m.a = rand(0.3, 0.6)
+                break
+            case 'leaf':
+                m.r = rand(2, 3.4)
+                m.vy = rand(46, 86)
+                m.swa = rand(8, 18)
+                m.a = rand(0.3, 0.55)
+                break
+            case 'dew':
+                m.r = rand(1.6, 3)
+                m.t = 0
+                m.life = rand(5, 10)
+                m.a = rand(0.25, 0.42)
+                break
+            case 'insect':
+                m.r = rand(1, 2)
+                m.t = rand(0.4, 2)
+                m.a = rand(0.3, 0.5)
+                break
+            case 'wheat':
+                m.r = rand(1.2, 2.4)
+                m.vx = rand(16, 34)
+                m.a = rand(0.25, 0.45)
+                break
+            case 'festival':
+                m.r = rand(1.2, 2.6)
+                m.vy = -rand(14, 30)
+                m.swa = rand(5, 12)
+                m.a = rand(0.3, 0.55)
+                break
+        }
+        return m
+    }
+
+    const spawnAll = (card: Card) => {
+        const base = Math.max(10, Math.round((W * H) / 76000)) * card.density
+        const cap = card.arch === 'rain' ? 64 : 34
+        const count = Math.min(cap, Math.round(base * (W < 700 ? 0.55 : 1)))
+        motes = Array.from({ length: count }, () => spawn(card, true))
+        lastArch = card.arch
+    }
+
+    let raf = 0
+    let last = 0
+    const frame = (t: number) => {
+        raf = requestAnimationFrame(frame)
+        const dt = Math.min(50, t - last || 16.7)
+        last = t
+        const card = pickCard(new Date())
+        const theme: 'light' | 'dark' =
+            document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
+        buildSprites(card, theme)
+        // 跨节气/换卡：换一批新粒子（一年翻 24 次的事，不做现场渐变）
+        currentCard = card
+        if (card.arch !== lastArch) spawnAll(card)
+
+        const colors = card[theme]
+        const k = dt / 1000
+        const sp = card.speed
+        ctx.clearRect(0, 0, W, H)
+
+        for (const p of motes) {
+            // 亮色纸底对比弱，整体给一档透明度补偿
+            const pa = theme === 'light' ? Math.min(0.8, p.a * 1.4) : p.a
+            switch (card.arch) {
+                case 'rain': {
+                    p.x += p.vx * k * sp
+                    p.y += p.vy * k * sp
+                    if (p.y > H + 26) {
+                        p.y = -26
+                        p.x = rand(0, W + 140)
+                    }
+                    ctx.globalAlpha = pa
+                    ctx.strokeStyle = colors[p.kind]
+                    // 雨脚：粗细与长度都跟着 r 走，一律 1px 的细线在纸底上就是蛛丝
+                    ctx.lineWidth = Math.max(1.1, p.r * 0.16)
+                    ctx.beginPath()
+                    ctx.moveTo(p.x, p.y)
+                    ctx.lineTo(p.x - p.vx * 0.03, p.y - p.vy * 0.03)
+                    ctx.stroke()
+                    break
+                }
+                case 'petal':
+                case 'leaf': {
+                    // 两段不同频率的摆叠成不规则轨迹，下落速度随摆动起伏，
+                    // 「飘」才飘得不均匀——直上直下就是少了这两下
+                    const wob =
+                        Math.sin((t / 1000) * p.swf + p.phase) +
+                        0.6 * Math.sin((t / 1000) * p.swf * 0.43 + p.phase * 1.7)
+                    p.x += wob * p.swa * (dt / 1000)
+                    p.y += p.vy * (0.72 + 0.42 * Math.sin((t / 1000) * p.swf * 0.6 + p.phase * 1.3)) * k * sp
+                    p.rot += p.rv * k * (0.72 + 0.84 * Math.abs(wob))
+                    if (p.y > H + 14) {
+                        p.y = -14
+                        p.x = rand(0, W)
+                    }
+                    if (p.x < -24) p.x = W + 24
+                    else if (p.x > W + 24) p.x = -24
+                    ctx.globalAlpha = pa
+                    ctx.fillStyle = colors[p.kind]
+                    ctx.save()
+                    ctx.translate(p.x, p.y)
+                    ctx.rotate(p.rot)
+                    // 绕自身长轴翻面：宽度周期性收窄，看着像真的在打旋
+                    const flip = 0.35 + 0.65 * Math.abs(Math.cos((t / 1000) * p.swf * 1.15 + p.phase))
+                    ctx.beginPath()
+                    if (card.arch === 'leaf') {
+                        ctx.ellipse(0, 0, p.r * 2.3 * flip, p.r * 0.95, 0, 0, Math.PI * 2)
+                        ctx.fill()
+                        // 叶脉一道
+                        ctx.strokeStyle = colors[1]
+                        ctx.globalAlpha = pa * 0.6
+                        ctx.lineWidth = 0.7
+                        ctx.beginPath()
+                        ctx.moveTo(-p.r * 2 * flip, 0)
+                        ctx.lineTo(p.r * 2 * flip, 0)
+                        ctx.stroke()
+                    } else {
+                        ctx.ellipse(0, 0, p.r * 1.7 * flip, p.r, 0, 0, Math.PI * 2)
+                        ctx.fill()
+                    }
+                    ctx.restore()
+                    break
+                }
+                case 'snow': {
+                    const drift =
+                        Math.sin((t / 1000) * p.swf + p.phase) +
+                        0.5 * Math.sin((t / 1000) * p.swf * 0.37 + p.phase * 2.1)
+                    p.x += drift * p.swa * (dt / 1000)
+                    p.y += p.vy * (0.8 + 0.3 * Math.sin((t / 1000) * p.swf * 0.5 + p.phase)) * k * sp
+                    if (p.y > H + 10) {
+                        p.y = -10
+                        p.x = rand(0, W)
+                    }
+                    if (theme === 'light') {
+                        // 白纸上雪是「留白」：淡墨空心圈
+                        ctx.globalAlpha = pa * 0.8
+                        ctx.strokeStyle = colors[p.kind]
+                        ctx.lineWidth = 1
+                        ctx.beginPath()
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+                        ctx.stroke()
+                    } else {
+                        ctx.globalAlpha = pa
+                        ctx.drawImage(sprites[p.kind], p.x - p.r * 2, p.y - p.r * 2, p.r * 4, p.r * 4)
+                    }
+                    break
+                }
+                case 'firefly': {
+                    // 缓慢游走 + 强明灭：大部分时间隐没，周期性亮起
+                    p.x += (p.vx + Math.sin((t / 1000) * p.sway + p.phase) * 6) * k * sp
+                    p.y += p.vy * k * sp
+                    if (p.x < -10) p.x = W + 10
+                    else if (p.x > W + 10) p.x = -10
+                    if (p.y < -10) p.y = H + 10
+                    else if (p.y > H + 10) p.y = -10
+                    const pulse = Math.max(0, Math.sin((t / 1000) * p.tw * 0.6 + p.phase))
+                    ctx.globalAlpha = pa * Math.pow(pulse, 2.2)
+                    ctx.drawImage(sprites[p.kind], p.x - p.r * 2.4, p.y - p.r * 2.4, p.r * 4.8, p.r * 4.8)
+                    break
+                }
+                case 'dew': {
+                    // 就地凝出 → 悬着微光 → 散去，换个地方再来
+                    p.t += dt / 1000
+                    if (p.t >= p.life) {
+                        const fresh = spawn(card, true)
+                        p.x = fresh.x
+                        p.y = fresh.y
+                        p.t = 0
+                        p.life = fresh.life
+                        p.r = fresh.r
+                        p.a = fresh.a
+                    }
+                    const remain = p.life - p.t
+                    ctx.globalAlpha = pa * Math.min(1, p.t / 0.8, remain / 0.8) * (0.8 + 0.2 * Math.sin((t / 1000) * 2 + p.phase))
+                    ctx.drawImage(sprites[p.kind], p.x - p.r * 2, p.y - p.r * 2, p.r * 4, p.r * 4)
+                    break
+                }
+                case 'insect': {
+                    // 急走两步、顿一顿：rest ↔ dash 两态切换
+                    p.t -= dt / 1000
+                    if (p.t <= 0) {
+                        if (p.state === 0) {
+                            p.state = 1
+                            p.t = rand(0.3, 0.6)
+                            const ang = rand(0, Math.PI * 2)
+                            const v = rand(70, 130)
+                            p.vx = Math.cos(ang) * v
+                            p.vy = Math.sin(ang) * v * 0.6
+                        } else {
+                            p.state = 0
+                            p.t = rand(1.4, 3.6)
+                            p.vx = 0
+                            p.vy = 0
+                        }
+                    }
+                    p.x += p.vx * k
+                    p.y += p.vy * k
+                    if (p.x < 6 || p.x > W - 6) p.vx *= -1
+                    if (p.y < 6 || p.y > H - 6) p.vy *= -1
+                    ctx.globalAlpha = pa
+                    ctx.drawImage(sprites[p.kind], p.x - p.r * 2, p.y - p.r * 2, p.r * 4, p.r * 4)
+                    break
+                }
+                case 'wheat': {
+                    // 金点随一道行波横向涌动，像风推着麦浪走
+                    p.x += p.vx * k * sp
+                    if (p.x > W + 10) {
+                        p.x = -10
+                        p.baseY = rand(H * 0.1, H * 0.9)
+                    }
+                    p.y = p.baseY + Math.sin(p.x * 0.012 + (t / 1000) * 0.75 + p.phase) * (7 + p.r * 2.4)
+                    ctx.globalAlpha = pa
+                    ctx.drawImage(sprites[p.kind], p.x - p.r * 2, p.y - p.r * 2, p.r * 4, p.r * 4)
+                    break
+                }
+                case 'festival': {
+                    // 赤金尘向上飘、明灭；朱砂点原地一闪一闪，像灯笼缝里漏的光
+                    p.y += p.vy * k * sp
+                    p.x +=
+                        (Math.sin((t / 1000) * p.swf + p.phase) +
+                            0.5 * Math.sin((t / 1000) * p.swf * 0.41 + p.phase * 1.9)) *
+                        p.swa *
+                        0.4 *
+                        (dt / 1000)
+                    if (p.y < -10) {
+                        p.y = H + 10
+                        p.x = rand(0, W)
+                    }
+                    if (p.kind === 0) {
+                        ctx.globalAlpha = pa * (0.7 + 0.3 * Math.sin((t / 1000) * p.tw + p.phase))
+                        ctx.drawImage(sprites[0], p.x - p.r * 2, p.y - p.r * 2, p.r * 4, p.r * 4)
+                    } else {
+                        const pulse = Math.max(0, Math.sin((t / 1000) * (p.tw * 0.9) + p.phase))
+                        ctx.globalAlpha = pa * Math.pow(pulse, 2)
+                        ctx.fillStyle = colors[1]
+                        ctx.beginPath()
+                        ctx.arc(p.x, p.y, p.r * 0.9, 0, Math.PI * 2)
+                        ctx.fill()
+                    }
+                    break
+                }
+                default: {
+                    // dust：光尘上飘、轻摆、微明灭。横摆同样叠两段频率，
+                    // 单频摆久了会看出「一排粒子在集体左右摇」的规律
+                    p.y += p.vy * k * sp
+                    p.x +=
+                        (Math.sin((t / 1000) * p.swf + p.phase) +
+                            0.5 * Math.sin((t / 1000) * p.swf * 0.41 + p.phase * 1.9)) *
+                        p.swa *
+                        0.5 *
+                        (dt / 1000)
+                    if (p.y < -10) {
+                        p.y = H + 10
+                        p.x = rand(0, W)
+                    }
+                    ctx.globalAlpha = pa * (0.75 + 0.25 * Math.sin((t / 1000) * p.tw * 0.7 + p.phase))
+                    ctx.drawImage(sprites[p.kind], p.x - p.r * 2, p.y - p.r * 2, p.r * 4, p.r * 4)
+                }
+            }
+        }
+        ctx.globalAlpha = 1
+    }
+    currentCard = pickCard(new Date())
+    spawnAll(currentCard)
+    raf = requestAnimationFrame(frame)
+
+    // 后台标签即停
+    document.addEventListener(
+        'visibilitychange',
+        () => {
+            if (document.hidden) {
+                cancelAnimationFrame(raf)
+            } else {
+                last = 0
+                raf = requestAnimationFrame(frame)
+            }
+        },
+        { passive: true }
+    )
+    window.addEventListener('resize', resize, { passive: true })
+
+    // 调参用的调试句柄：粒子的 x/y 是活对象，直接读两次就能量出真实位移，
+    // 比截图猜轨迹可靠得多。只在 dev 里挂，产物里不存在。
+    if (import.meta.env.DEV) {
+        ;(window as unknown as Record<string, unknown>).__xuanMotes = {
+            particles: () => motes.map((m) => ({ x: m.x, y: m.y, vy: m.vy, swa: m.swa, swf: m.swf, a: m.a, kind: m.kind })),
+            card: () => (currentCard ? { name: currentCard.name, arch: currentCard.arch, density: currentCard.density } : null),
+        }
+    }
+}
+
+registerPageInit(initMotes)
+</script>

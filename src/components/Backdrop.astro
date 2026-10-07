@@ -1,0 +1,40 @@
+---
+// Backdrop.astro —— 全站固定背景层
+//
+// 纸色 + 两笔光晕 + 远山 + 纸纹，全部画在这一层。
+//
+// ⚠️ 为什么不直接挂在 body 上：OverlayScrollbars 接管滚动后会把 body 当作
+// 「滚动内容」用 transform 平移，而 Chromium 对「有 transform 祖先」的元素
+// 会把 background-attachment: fixed 降级成 scroll——挂 body 上的远山会跟着
+// 文章一起被滚走。这层 position:fixed 放在 MainPageLayout 的 isolate 包装里
+// （与照片层、浮尘画布同一套路），和滚动彻底解耦。
+// 顺序：本层在最底（DOM 在 Motes 之前），浮尘画布叠在它上面。
+---
+
+<div class="xuan-backdrop" aria-hidden="true"></div>
+
+<style>
+    .xuan-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background-color: var(--bg-color);
+        background-image:
+            radial-gradient(circle at 0% 0%, rgba(178, 58, 46, 0.05), transparent 46%),
+            radial-gradient(circle at 100% 100%, rgba(60, 91, 111, 0.055), transparent 48%),
+            var(--xuan-hills),
+            var(--paper-grain);
+        background-size: auto, auto, 100% 220px, 180px 180px;
+        background-position: 0 0, 100% 100%, 50% 100%, 0 0;
+        background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+    }
+
+    :global([data-theme="dark"]) .xuan-backdrop {
+        background-image:
+            radial-gradient(circle at 0% 0%, rgba(217, 90, 76, 0.06), transparent 46%),
+            radial-gradient(circle at 100% 100%, rgba(123, 163, 187, 0.07), transparent 48%),
+            var(--xuan-hills),
+            var(--paper-grain);
+    }
+</style>

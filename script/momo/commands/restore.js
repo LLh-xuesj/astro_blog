@@ -1,4 +1,4 @@
-// restore.js — pnpm momo restore：从备份恢复配置文件（可选连同内容）
+// restore.js — pnpm xuan restore：从备份恢复配置文件（可选连同内容）
 import { join } from 'node:path'
 import { readdir } from 'node:fs/promises'
 import {
@@ -26,7 +26,7 @@ async function entriesOf(dir, manifest) {
 export default {
   name: 'restore',
   summary: '从备份恢复文件（默认最近一次备份）',
-  usage: 'pnpm momo restore [备份名称] [--out <目录>] [--list] [--yes]',
+  usage: 'pnpm xuan restore [备份名称] [--out <目录>] [--list] [--yes]',
   details: '恢复会用备份中的文件覆盖当前文件；不会删除备份里没有的文件。',
   options: {
     out: { type: 'string', desc: `备份根目录，默认 ${BACKUP_DIR}` },
@@ -44,7 +44,7 @@ export default {
       printBackups(backups, outDir)
       return
     }
-    if (!backups.length) fail(`还没有任何备份，先执行 pnpm momo backup`)
+    if (!backups.length) fail(`还没有任何备份，先执行 pnpm xuan backup`)
 
     const name = positional[0]
     const target = name ? backups.find((b) => b.name === name) : backups[0]

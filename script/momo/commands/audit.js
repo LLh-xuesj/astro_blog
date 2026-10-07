@@ -1,4 +1,4 @@
-// audit.js — pnpm momo audit：统计构建产物的首屏体积指标，用于优化前后对比
+// audit.js — pnpm xuan audit：统计构建产物的首屏体积指标，用于优化前后对比
 // 只依赖 Node 内置模块；指标口径与 TODO.md 的「基线数据」一致
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -230,7 +230,7 @@ function compareWithBaseline(current, baseline) {
 export default {
   name: 'audit',
   summary: '统计构建产物的 CSS / JS / 字体体积与页面脚本开销',
-  usage: 'pnpm momo audit [--dist <目录>] [--json] [--save <文件>] [--compare <文件>]',
+  usage: 'pnpm xuan audit [--dist <目录>] [--json] [--save <文件>] [--compare <文件>]',
   details:
     '对 dist/ 做静态统计：页面的外链样式表 / 脚本体积、@font-face 数量、内联脚本数，\n' +
     '以及全站字体文件与 _astro 资源总量。用 --save 存下基线，之后 --compare 一键对比。',

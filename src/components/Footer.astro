@@ -1,6 +1,12 @@
 ---
 import { Icon } from "astro-icon/components";
 import { profileConfig } from "../config";
+import Seal from "./Seal.astro";
+import { getCurrentTerm } from "@utils/solarTerms";
+import { getShichen } from "@utils/cnText";
+
+const term = getCurrentTerm();
+const shichen = getShichen();
 
 let introPage : string;
 
@@ -13,14 +19,20 @@ if (profileConfig.indexPage) {
 
 <!-- footer -->
 <footer class="flex flex-col md:flex-row md:justify-between items-start md:items-center py-10 text-[var(--text-color-70)] max-w-[var(--header-width)] mx-auto w-full">
-    <div class="mb-1 md:mb-0">
-        © {profileConfig.startYear} - {new Date().getFullYear()} <a class="link-line" target="_self" href={introPage}>{profileConfig.name}</a>. 
+    <div class="mb-1 md:mb-0 flex items-center gap-2 flex-wrap">
+        <Seal size="1.05rem" />
+        <span>© {profileConfig.startYear} - {new Date().getFullYear()} <a class="link-line" target="_self" href={introPage}>{profileConfig.name}</a>.</span>
+        <!-- 节气签：构建期算好的小签，与背景那层节气动效同源 -->
+        <span class="today-term" data-term={term.name} data-imagery={term.imagery} title={`今日节气 · ${term.imagery} —— 页面背景的动效随节气更换`}>今日 · {term.name}<span class="today-imagery">{term.imagery}</span></span>
+        <!-- 时辰签：十二时辰配一句闲话，客户端按访客时钟更新 -->
+        <span class="today-shichen" data-shichen={shichen.name} title="十二时辰">{shichen.name} · {shichen.line}</span>
     </div>
     <div class="right">
         <p>Powered by 
         <a target="_blank" href="https://astro.build" title="Astro" class="tooltip-wrapper"><Icon name="simple-icons:astro" class="inline-block" /></a> 
         <a target="_blank" href="https://svelte.dev/" title="Svelte" class="tooltip-wrapper"><Icon name="simple-icons:svelte" class="inline-block"/></a> 
         <a target="_blank" href="https://tailwindcss.com/" title="tailwindcss" class="tooltip-wrapper"><Icon name="simple-icons:tailwindcss" class="inline-block"/></a> 
+        <!-- 这里指向上游模板 Momo 作为署名；换成自己的仓库地址即可 -->
         <a target="_blank" href="https://github.com/Motues/Momo" title="Momo" class="tooltip-wrapper"><Icon name="simple-icons:github" class="inline-block"/></a> 
         | 
         <a href="/rss.xml" target="_self" title="RSS" class="tooltip-wrapper"><Icon name="simple-icons:rss" class="inline-block" /></a>
@@ -31,8 +43,43 @@ if (profileConfig.indexPage) {
 
 <style>
     footer {
-        font-family:  "EB Garamond", cursive !important; 
+        font-family: var(--serif) !important;
     }
+
+    /* 节气签：老宋体一枚小签，像日历上圈出来的那一笔 */
+    .today-term {
+        font-family: var(--serif-head);
+        font-size: 0.82rem;
+        letter-spacing: 0.1em;
+        color: var(--accent);
+        opacity: 0.85;
+        border: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+        border-radius: 4px;
+        padding: 0.1rem 0.45rem;
+        white-space: nowrap;
+    }
+    /* 意象：节气后面那四个字，像历书上的小注——换成正文字体、颜色退一档 */
+    .today-imagery {
+        margin-left: 0.4em;
+        padding-left: 0.45em;
+        border-left: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+        font-family: var(--serif);
+        font-size: 0.94em;
+        letter-spacing: 0.08em;
+        color: color-mix(in srgb, var(--accent) 52%, var(--ink-mute));
+    }
+    /* 时辰签：跟节气签同一枚信物，只是更素——墨色而不是朱砂 */
+    .today-shichen {
+        font-family: var(--serif-head);
+        font-size: 0.82rem;
+        letter-spacing: 0.1em;
+        color: var(--ink-mute);
+        border: 1px dashed color-mix(in srgb, var(--ink-mute) 40%, transparent);
+        border-radius: 4px;
+        padding: 0.1rem 0.45rem;
+        white-space: nowrap;
+    }
+
    .right a {
         color: inherit;
         /* transition: color 0.3s ease; */
@@ -87,3 +134,40 @@ if (profileConfig.indexPage) {
         }
     }
 </style>
+
+<script>
+    import { getCurrentTerm } from "@utils/solarTerms";
+    import { getShichen } from "@utils/cnText";
+    import { registerPageInit } from "@utils/pageInit";
+
+    // 构建期那枚是「出片快照」，访客的今天在这里对齐——否则站点停更一阵子，
+    // 页脚写的还是旧节气，跟背景那层按访客日期算的动效对不上
+    registerPageInit(() => {
+        const el = document.querySelector<HTMLElement>(".today-term");
+        if (!el) return;
+        const { name, imagery } = getCurrentTerm();
+        if (el.dataset.term === name) return;
+        el.dataset.term = name;
+        el.dataset.imagery = imagery;
+        el.title = `今日节气 · ${imagery} —— 页面背景的动效随节气更换`;
+        if (el.firstChild) el.firstChild.textContent = `今日 · ${name}`;
+        const im = el.querySelector(".today-imagery");
+        if (im) im.textContent = imagery;
+    });
+
+    // 时辰按访客的钟走，一分钟对一次就够（跨时辰才动 DOM）
+    let shichenTimer: ReturnType<typeof setInterval> | undefined
+    registerPageInit(() => {
+        const el = document.querySelector<HTMLElement>(".today-shichen");
+        if (!el) return;
+        const apply = () => {
+            const { name, line } = getShichen();
+            if (el.dataset.shichen === name) return;
+            el.dataset.shichen = name;
+            el.textContent = `${name} · ${line}`;
+        };
+        apply();
+        if (shichenTimer) clearInterval(shichenTimer);
+        shichenTimer = setInterval(apply, 60_000);
+    });
+</script>

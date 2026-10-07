@@ -1,4 +1,4 @@
-// backup.js — pnpm momo backup：默认只备份 src/config.ts（--config 全部配置，--all 再加文章）
+// backup.js — pnpm xuan backup：默认只备份 src/config.ts（--config 全部配置，--all 再加文章）
 import { join } from 'node:path'
 import { readdir, stat } from 'node:fs/promises'
 import {
@@ -92,7 +92,7 @@ export function printBackups(backups, outDir) {
 export default {
   name: 'backup',
   summary: '备份 src/config.ts（--config 全部配置，--all 再加文章内容）',
-  usage: 'pnpm momo backup [--config] [--all] [--name <名称>] [--out <目录>] [--list]',
+  usage: 'pnpm xuan backup [--config] [--all] [--name <名称>] [--out <目录>] [--list]',
   details: [
     '默认只备份需要你自己修改的配置文件：',
     `  ${USER_CONFIG_PATHS.join('、')}`,
@@ -163,7 +163,7 @@ export default {
     log.raw()
     log.ok(`备份完成：${c.bold(relPath(dest))}`)
     log.info(c.gray(`共 ${files} 个文件 / ${formatBytes(bytes)}`))
-    log.info(c.gray(`恢复：pnpm momo restore ${flags.name || ''}`.trim()))
+    log.info(c.gray(`恢复：pnpm xuan restore ${flags.name || ''}`.trim()))
 
     // 备份目录若在仓库内且未被忽略，会污染 git status（进而影响 momo update）
     if (isInsideRoot(outDir)) {

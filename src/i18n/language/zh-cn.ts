@@ -5,6 +5,7 @@ const translation: Translation = {
     header: {
         home: "首页",
         archive: "归档",
+        murmurs: "碎碎念",
         about: "关于",
         friends: "友链",
     },
@@ -24,6 +25,7 @@ const translation: Translation = {
         toc: "目录",
         backToComments: "前往评论区",
         scrollDown: "向下滚动查看文章",
+        copyLink: "复制链接",
     },
     search: {
         placeholder: "输入关键词开始搜索",
@@ -36,13 +38,15 @@ const translation: Translation = {
         publishon: "发布时间"
     },
     blogNavi: {
-        next: "下一篇",
-        prev: "上一篇"
+        next: "卷后",
+        prev: "卷前"
     },
     pagecard: {
-        words: "字",
+        words: "言",
         minutes: "分钟",
-        uncategorized: "未分类"
+        uncategorized: "未分类",
+        copied: "已复制",
+        readInfo: "凡 {words} 言，{minutes}可读"
     },
     comments: {
         name: "昵称",

@@ -1,4 +1,4 @@
-// new.js — pnpm momo new：新建文章（frontmatter 与 src/content.config.ts 的 schema 一致）
+// new.js — pnpm xuan new：新建文章（frontmatter 与 src/content.config.ts 的 schema 一致）
 import { writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { c, ensureDir, fail, fromRoot, log, pathExists, relPath } from '../lib.js'
@@ -23,7 +23,7 @@ function autoPath(date = new Date()) {
 export default {
   name: 'new',
   summary: '新建一篇文章（默认路径按日期生成）',
-  usage: 'pnpm momo new [路径] [--lang <zh-cn|en>] [--title <标题>] [--category <分类>] [--draft] [--force]',
+  usage: 'pnpm xuan new [路径] [--lang <zh-cn|en>] [--title <标题>] [--category <分类>] [--draft] [--force]',
   details: [
     '创建 src/content/blog/<路径>/<语言>.md，并写入符合 schema 的 frontmatter。',
     '路径省略时按日期生成，例如 2026/2026-09-10。',

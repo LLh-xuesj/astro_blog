@@ -204,7 +204,7 @@ function buildShell(root: HTMLElement, state: EditorState) {
           ]),
           el('label', { class: 'form-field' }, [
             'slugId',
-            el('input', { class: 'input mono', id: 'f-slugid', placeholder: '文章标识，如 momo/xxx（不影响文件夹位置）' }),
+            el('input', { class: 'input mono', id: 'f-slugid', placeholder: '文章标识，如 intro/xxx（不影响文件夹位置）' }),
           ]),
           el('label', { class: 'form-field wide' }, [
             '封面图',

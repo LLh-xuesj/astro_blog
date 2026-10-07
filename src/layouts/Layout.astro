@@ -3,10 +3,13 @@ import { siteConfig, profileConfig } from '@/config';
 import "@styles/global.css"
 import OverlayScrollbars from '@components/control/OverlayScrollbars.astro';
 import "@styles/swup-transition.css"
-import '@fontsource/eb-garamond';
 import notoSerifSc400 from '@fontsource/noto-serif-sc/400.css?url';
 import notoSerifSc700 from '@fontsource/noto-serif-sc/700.css?url';
-import lxgwBrightCss from '@chinese-fonts/lxgwwenkaibright/dist/LXGWBright-Medium/result.css?url';
+/* 宣纸主题的两套中文字面（cn-font-split 切片，浏览器按 unicode-range 只下用得上的块）：
+   正文 霞鹜文楷 Regular/Medium，标题与站点徽标 京华老宋体。西文的 @font-face 在 fonts.css 里 */
+import lxgwWenKaiRegularCss from '@chinese-fonts/lxgwwenkai/dist/LXGWWenKai-Regular/result.css?url';
+import lxgwWenKaiMediumCss from '@chinese-fonts/lxgwwenkai/dist/LXGWWenKai-Medium/result.css?url';
+import kingHwaOldSongCss from '@chinese-fonts/jhlst/dist/京華老宋体v2_002/result.css?url';
 import osCss from 'overlayscrollbars/styles/overlayscrollbars.scriptingenabled.css?url';
 import photoCoverCss from '@styles/photo-cover.css?url';
 import { i18n } from "astro:config/client";
@@ -40,7 +43,9 @@ interface Props {
   noindex?: boolean;
   /** 额外的 JSON-LD 结构化数据，与站点级 WebSite 一起输出 */
   structuredData?: Record<string, unknown> | Record<string, unknown>[];
-  /** 页面是否渲染 Markdown 正文：决定要不要异步加载引用块专用的 LXGW 字体 */
+  /** 页面是否渲染 Markdown 正文。原先用来异步加载引用块专用的 LXGW Bright，
+      改用宣纸主题的全站字体后已没有只给正文用的字体资源，此参数暂时不再生效，
+      但保留接口，方便以后给 Markdown 页挂只该页需要的字体 */
   markdownFont?: boolean;
 }
 const {
@@ -80,8 +85,9 @@ const schemas = [
 // 转义 < 防止正文里的 </script> 提前闭合标签
 const jsonLd = JSON.stringify(schemas).replace(/</g, '\\u003c');
 
-// ---- 第三方域名预热（统计脚本 / 评论后端）----
-const umamiScript = 'https://umami.motues.top/script.js';
+// ---- 第三方域名预热（评论后端）----
+// 注：模板自带的 umami 统计已移除——它指向 Momo 作者的服务器，
+// 会把本站访客的浏览数据上报给第三方。想加统计请自建 umami 后在此填自己的地址。
 function originOf(value?: string) {
   if (!value) return '';
   try {
@@ -187,9 +193,11 @@ const photoCoverOn = photoCoverEnabled();
     <meta name="twitter:description" content={descriptionText}>
     {shareImage && <meta name="twitter:image" content={shareImage}>}
 
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbfbfb">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0a">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f0e0">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1714">
     <link rel="alternate" type="application/rss+xml" title={getSiteTitle()} href={new URL("rss.xml", Astro.site)} >
+    <link rel="icon" type="image/svg+xml" href="/favicon/xuan-seal.svg">
+    <link rel="apple-touch-icon" href="/favicon/xuan-seal-180.png">
     <link rel="icon" href={siteConfig.favicon} type="image/x-icon">
 
     <!-- OverlayScrollbars 的样式表：必须阻塞（桥接属性要在首屏前把原生滚动条藏掉） -->
@@ -203,19 +211,20 @@ const photoCoverOn = photoCoverEnabled();
     <link rel="stylesheet" data-swup-theme href={notoSerifSc700} media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href={notoSerifSc700}></noscript>
 
-    <!-- 引用块字体（LXGW Bright Medium）：只有渲染正文的页面才需要，同样非阻塞 -->
-    {markdownFont && <link rel="stylesheet" href={lxgwBrightCss} media="print" onload="this.media='all'">}
-    {markdownFont && <noscript><link rel="stylesheet" href={lxgwBrightCss}></noscript>}
+    <!-- 中文字面：正文霞鹜文楷（Regular + Medium），标题与徽标京华老宋体，全站都要用。
+         一律非阻塞加载（media="print" + onload 切回 all），首屏不等字体；
+         data-swup-theme 让换页时 swup 一并接管这两个样式表 -->
+    <link rel="stylesheet" data-swup-theme href={lxgwWenKaiRegularCss} media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href={lxgwWenKaiRegularCss}></noscript>
+    <link rel="stylesheet" data-swup-theme href={lxgwWenKaiMediumCss} media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href={lxgwWenKaiMediumCss}></noscript>
+    <link rel="stylesheet" data-swup-theme href={kingHwaOldSongCss} media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href={kingHwaOldSongCss}></noscript>
 
-    <!-- 第三方域名连接预热：统计域名随时可能用到，评论后端只在文章页预热 -->
-    <link rel="dns-prefetch" href={originOf(umamiScript)}>
-    <link rel="preconnect" href={originOf(umamiScript)} crossorigin>
+    <!-- 第三方域名连接预热：评论后端只在文章页预热 -->
     {commentOrigin && <link rel="dns-prefetch" href={commentOrigin}>}
     {commentOrigin && <link rel="preconnect" href={commentOrigin} crossorigin>}
 
-    <!-- data-swup-ignore-script：umami 的采集脚本只加载一次；
-         换页的 PV 由下面的内联脚本在 astro:page-load 时手动上报 -->
-    <script defer src={umamiScript} data-hash is:inline data-swup-ignore-script></script>
     <title>{pageTitle}</title>
     <script type="application/ld+json" set:html={jsonLd}></script>
     <script is:inline data-swup-ignore-script>
@@ -332,19 +341,53 @@ const photoCoverOn = photoCoverEnabled();
             }));
         });
 
-        // 4. 统计：swup 不会整页刷新，umami 的自动 PV 统计不会触发，这里补一次。
-        //    astro:page-load 只在真实访问时派发（首屏不派发），所以首屏不会重复计数。
-        document.addEventListener('astro:page-load', () => {
-            const url = window.location.pathname + window.location.search;
-            if (window.__momoUmamiUrl === url) return;
-            window.__momoUmamiUrl = url;
-            window.umami?.track?.();
+        // 4. 阅读进度线：按 document 的滚动比例填宽度。
+        //    这一条在 swup 容器外，元素不会被换页重建，所以监听只挂一次；
+        //    换页后内容高度变了，用 astro:page-load 重算一次即可。
+        document.addEventListener('DOMContentLoaded', () => {
+            const bar = document.getElementById('read-progress');
+            const fill = bar && bar.firstElementChild;
+            if (!bar || !fill) return;
+
+            let raf = 0;
+            const update = () => {
+                raf = 0;
+                const doc = document.documentElement;
+                const max = doc.scrollHeight - doc.clientHeight;
+                // 没什么可滚的页面（首页、404）不显示，避免顶着一根静止的线
+                if (max < 80) {
+                    bar.classList.remove('visible');
+                    return;
+                }
+                const y = window.scrollY || doc.scrollTop || 0;
+                const p = Math.min(1, Math.max(0, y / max));
+                fill.style.width = (p * 100).toFixed(2) + '%';
+                // 起始位置也藏起来：顶部那条线会跟导航胶囊、封面标题挤在一起
+                bar.classList.toggle('visible', y > 40);
+            };
+            const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+
+            window.addEventListener('scroll', schedule, { passive: true });
+            window.addEventListener('resize', schedule, { passive: true });
+            document.addEventListener('astro:page-load', schedule);
+            update();
         });
+
+        // 5. 控制台彩蛋：给按 F12 的访客盖一枚印
+        console.log(
+            '%c宣',
+            'background:#b23a2e;color:#fdfbf6;font:700 26px/1.4 "KingHwaOldSong","京華老宋体","Noto Serif SC",serif;padding:4px 14px;border-radius:6px',
+            String.fromCharCode(10) + '纸上得来终觉浅，绝知此事要躬行。'
+        );
     </script>
 </head>
 <body class="h-full bg-[var(--bg-color)]" {...aosBodyAttrs} {...osAttrs}>
     
     {osEnabled && <OverlayScrollbars />}
+
+    <!-- 阅读进度：顶上一条朱砂细线，随滚动向右填满。
+         放在 swup 容器之外，换页时不会被重建，监听器也就只需要挂一次 -->
+    <div id="read-progress" aria-hidden="true"><span></span></div>
 
     <div id="loading-overlay" aria-hidden="true">
       <div class="spinner"></div>
@@ -356,6 +399,33 @@ const photoCoverOn = photoCoverEnabled();
 </html>
 
 <style is:global>
+  /* 阅读进度线：2px 朱砂→藤黄渐变，盖在吸顶导航之上（z 高于 header 的 z-50）。
+     短到没什么可滚的页面（max < 80px）整条隐藏，不留一根空线 */
+  #read-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  #read-progress.visible {
+    opacity: 1;
+  }
+
+  #read-progress > span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--accent), var(--gold-deep));
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 45%, transparent);
+    transition: width 0.08s linear;
+  }
+
   #loading-overlay {
     position: fixed;
     inset: 0;

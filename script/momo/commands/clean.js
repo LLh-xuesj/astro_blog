@@ -1,4 +1,4 @@
-// clean.js — pnpm momo clean：清理构建产物与缓存
+// clean.js — pnpm xuan clean：清理构建产物与缓存
 import {
   c,
   confirm,
@@ -30,7 +30,7 @@ const ALL_TARGETS = [
 export default {
   name: 'clean',
   summary: '清理构建产物与缓存（--all 连同 node_modules）',
-  usage: 'pnpm momo clean [--all] [--dry-run] [--yes]',
+  usage: 'pnpm xuan clean [--all] [--dry-run] [--yes]',
   options: {
     all: { alias: 'a', type: 'boolean', desc: '同时删除 node_modules（需重新安装依赖）' },
     'dry-run': { type: 'boolean', desc: '只显示将要删除的内容，不实际删除' },

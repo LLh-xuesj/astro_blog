@@ -93,9 +93,132 @@ const className = Astro.props.class
   }
 
   registerPageInit(handleLqipImages);
+
+  // 脚注悬浮预览：鼠标停在文中的 [1] 上，直接浮出页尾那条注释，不用跳。
+  // 纯桌面增强——触屏没有 hover，点击仍然照旧跳到脚注区。
+  function setupFootnotePreviews() {
+    const markdownRoot = document.querySelector('.markdown-content');
+    if (!markdownRoot || markdownRoot.dataset.fnPreviewBound === '1') return;
+    markdownRoot.dataset.fnPreviewBound = '1';
+
+    const popover = document.createElement('div');
+    popover.className = 'xuan-fn-popover';
+    popover.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(popover);
+
+    let hideTimer = null;
+    let currentLink = null;
+
+    const show = (link) => {
+      const id = (link.getAttribute('href') || '').replace('#', '');
+      const target = id && document.getElementById(id);
+      if (!target) return;
+      // 克隆脚注内容，摘掉「返回」箭头，只留正文
+      const clone = target.cloneNode(true);
+      clone.querySelectorAll('a[data-footnote-backref]').forEach((a) => a.remove());
+      popover.replaceChildren(...clone.childNodes);
+      popover.classList.add('show');
+
+      const r = link.getBoundingClientRect();
+      const pw = popover.offsetWidth;
+      const ph = popover.offsetHeight;
+      // 水平居中于引用标记，两端夹在视口内；垂直方向上半屏放下方，其余放上方
+      let x = r.left + r.width / 2 - pw / 2;
+      x = Math.max(10, Math.min(x, window.innerWidth - pw - 10));
+      let y = r.top > ph + 60 ? r.top - ph - 10 : r.bottom + 10;
+      popover.style.left = `${Math.round(x)}px`;
+      popover.style.top = `${Math.round(y)}px`;
+      currentLink = link;
+    };
+
+    const hide = () => {
+      popover.classList.remove('show');
+      currentLink = null;
+    };
+
+    // 事件委托：整篇正文一个监听器管所有脚注引用
+    markdownRoot.addEventListener('mouseover', (e) => {
+      const link = e.target instanceof Element ? e.target.closest('sup a[data-footnote-ref]') : null;
+      if (!link || link === currentLink) return;
+      clearTimeout(hideTimer);
+      show(link);
+    });
+    markdownRoot.addEventListener('mouseout', (e) => {
+      const link = e.target instanceof Element ? e.target.closest('sup a[data-footnote-ref]') : null;
+      if (!link) return;
+      // 挪去弹层上时不收（允许鼠标进弹层选文字），挪开 200ms 后才收
+      hideTimer = setTimeout(hide, 200);
+    });
+    popover.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+    popover.addEventListener('mouseleave', hide);
+    // 滚动即收：定位是静态坐标，滚动后会指错地方
+    window.addEventListener('scroll', hide, { passive: true });
+  }
+
+  registerPageInit(setupFootnotePreviews);
+
+  // 图注装裱：一段里只有一张带 alt 的图时，把「段落」升格成 figure，
+  // alt 落成图注小字。灯箱会读 figcaption，放大时图注跟着进幕布。
+  function setupFigureCaptions() {
+    document.querySelectorAll('.markdown-content img[alt]').forEach((img) => {
+      const alt = img.getAttribute('alt')?.trim();
+      if (!alt) return; // 空 alt 是装饰图，不是「有款识的画」
+      const parent = img.parentElement;
+      if (!parent || parent.tagName !== 'P') return;
+      // 段落里还有别的元素/文字就不动它（行内图文混排不是「一幅画」）
+      const onlyChild = Array.from(parent.childNodes).every(
+        (n) => n === img || (n.nodeType === Node.TEXT_NODE && !n.textContent?.trim()),
+      );
+      if (!onlyChild || img.closest('a, figure, .image-collage')) return;
+      // 挂专属类：Expressive Code 的代码块也是 figure.frame，样式不能误伤
+      const figure = document.createElement('figure');
+      figure.className = 'xuan-captioned';
+      const caption = document.createElement('figcaption');
+      caption.textContent = alt;
+      parent.replaceWith(figure);
+      figure.append(img, caption);
+    });
+  }
+
+  registerPageInit(setupFigureCaptions);
+
 </script>
 
 <style is:global>
+  /* 脚注悬浮预览：一张小纸签 */
+  .xuan-fn-popover {
+    position: fixed;
+    z-index: 1200;
+    max-width: min(24rem, calc(100vw - 2rem));
+    background: var(--paper-sheet);
+    border: 1px solid var(--paper-edge);
+    border-radius: 6px;
+    box-shadow: 0 12px 32px -14px rgba(70, 60, 45, 0.4);
+    padding: 0.7rem 0.95rem;
+    font-family: var(--serif);
+    font-size: 0.85rem;
+    line-height: 1.75;
+    color: var(--ink);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+
+  .xuan-fn-popover.show {
+    opacity: 1;
+    transform: none;
+  }
+
+  .xuan-fn-popover:empty {
+    display: none;
+  }
+
+  [data-theme="dark"] .xuan-fn-popover {
+    background: var(--paper-deep);
+    box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  }
+
   /* 代码块的复制按钮 / 可折叠段落 / 语法高亮均由 Expressive Code 提供
      （astro-expressive-code 集成 + src/config.ts 的 expressiveCode 开关与根目录 ec.config.mjs，
      CSS 与 JS 会随代码块自动注入；关闭 expressiveCode 后代码块回退为 markdown.css 里的纯文本样式） */

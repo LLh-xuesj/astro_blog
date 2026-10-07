@@ -197,7 +197,7 @@ export async function readArticle(path) {
   return { path: rel, files }
 }
 
-// 保存文章；文件夹位置以路径为准，slugId 通常只是元数据（如评论 postSlug，形如 momo/xxx）
+// 保存文章；文件夹位置以路径为准，slugId 通常只是元数据（如评论 postSlug，形如 intro/xxx）
 export async function saveArticle(path, lang, payload) {
   const rel = safeRel(path)
   if (!rel) return { error: '无效路径' }

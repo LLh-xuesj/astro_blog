@@ -1,7 +1,9 @@
 @import "tailwindcss";
+@import "./fonts.css";
 @import "./variables.css";
 @import "./special.css";
 @import "./scrollbar.css";
+@import "./print.css";
 
 @layer base {
 
@@ -12,8 +14,22 @@
 
   body {
     @apply bg-[--bg-color] text-[--text-color];
-    font-family: "Noto Serif SC", "Times New Roman", "STZhongsong", serif;
+    /* 正文字面：西文 EB Garamond（放大版）+ 中文霞鹜文楷，见 variables.css 的 --serif */
+    font-family: var(--serif);
+    /* 允许合成字重（界面上的 font-bold 需要），但禁止伪斜体：
+       文楷与老宋体都没有斜体字面，浏览器硬倾斜出来的效果要不得 */
+    font-synthesis: weight;
     overflow-y: scroll;
+    /* 纸色/光晕/远山/纸纹不在 body 上——OverlayScrollbars 用 transform 平移 body，
+       Chromium 会把 fixed 背景降级成 scroll，远山就跟着文章被滚走了。
+       整套背景在 components/Backdrop.astro 的固定层里（MainPageLayout 里的 <Backdrop />） */
+  }
+
+  /* 全站标题统一走「西文 EB Garamond + 中文京华老宋体」这一路（正文是霞鹜文楷）。
+     这里只管字面与墨色，字号字重仍由各处自己的规则决定 */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--serif-head);
+    color: var(--ink-strong);
   }
 
   html[data-overlayscrollbars] body {
@@ -31,4 +47,32 @@
     color: var(--selection-text-color);
   }
 
+}
+
+/* ===========================================================================
+ * 墨滴扩散：明暗切换的过渡
+ * ---------------------------------------------------------------------------
+ * 切换深浅色时，新画面以点击处为圆心、像一滴墨在宣纸上晕开那样盖住旧画面。
+ * 用的是 View Transitions API：ThemeIcon.astro 在切换前把点击坐标写进
+ * --xuan-ink-x / --xuan-ink-y，这里的动画拿它当圆心。
+ * 不支持的浏览器没有这些伪元素，自然退化为普通瞬切；prefers-reduced-motion
+ * 下 ThemeIcon 会直接跳过 startViewTransition。
+ * =========================================================================== */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: xuan-ink-spread 0.5s ease-in;
+}
+
+@keyframes xuan-ink-spread {
+  from {
+    clip-path: circle(0 at var(--xuan-ink-x, 50%) var(--xuan-ink-y, 50%));
+  }
+  to {
+    clip-path: circle(142% at var(--xuan-ink-x, 50%) var(--xuan-ink-y, 50%));
+  }
 }

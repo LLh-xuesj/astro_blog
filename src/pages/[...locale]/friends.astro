@@ -35,32 +35,34 @@ const pageDescription = `${t("cover.title.friends")} - ${t("cover.subTitle.frien
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-[var(--text-color)] mb-12">
             {
                 friendLinkConfig.map((friend) => (
-                    <a 
-                        href={friend.url} 
-                        target="_blank" 
+                    <a
+                        href={friend.url}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        class="group flex items-center justify-between p-4 border border-[var(--button-border-color)] rounded-lg shadow-sm active:bg-[var(--button-hover-color)] hover:bg-[var(--button-hover-color)] transition-colors duration-300"
+                        class="mingtie group flex items-stretch gap-4 p-4 pr-3 border border-[var(--paper-edge)] rounded-[2px] bg-[var(--paper-sheet)] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-14px_var(--shadow-color)]"
                     >
-                        <div class="flex items-center min-w-0">
-                            <img 
-                                src={friend.avatar} 
-                                alt={friend.name} 
-                                class="w-16 h-16 rounded-full object-cover mr-4 flex-shrink-0"
+                        {/* 名帖左条：竖排名字 + 一方小印，像拜帖上的署名 */}
+                        <div class="mingtie-spine flex flex-col items-center gap-2 pt-1 pb-1 pr-3 border-r border-dashed border-[var(--paper-edge)]">
+                            <span class="mingtie-name">{friend.name}</span>
+                            <span class="mingtie-seal" aria-hidden="true">宣</span>
+                        </div>
+                        <div class="flex items-center min-w-0 flex-1">
+                            <img
+                                src={friend.avatar}
+                                alt={friend.name}
+                                class="w-14 h-14 rounded-[2px] object-cover mr-4 flex-shrink-0 border border-[var(--paper-edge)]"
                                 onerror="this.src='https://www.gravatar.com/avatar/?d=mp'"
                             />
-                            <div class="min-w-0">
-                                <h2 class="font-bold text-lg truncate transition-colors duration-300 group-hover:text-[var(--link-color)] group-active:text-[var(--link-color)]">{friend.name}</h2>
-                                <p class="text-[var(--text-color-70)] text-sm truncate">{friend.description}</p>
-                            </div>
+                            <p class="text-[var(--text-color-70)] text-sm leading-relaxed min-w-0">{friend.description}</p>
                         </div>
-                        
-                        <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            fill="none" 
-                            viewBox="0 0 24 24" 
-                            stroke-width="2" 
-                            stroke="currentColor" 
-                            class="w-5 h-5 text-[var(--link-color)] opacity-0 transform translate-x-[-10px] group-hover:opacity-100 group-hover:translate-x-0 group-active:opacity-100 group-active:translate-x-0 transition duration-300 ml-2 flex-shrink-0"
+
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            class="w-4 h-4 self-center text-[var(--accent)] opacity-0 translate-x-[-8px] group-hover:opacity-100 group-hover:translate-x-0 transition duration-300 ml-2 flex-shrink-0"
                         >
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                         </svg>
@@ -72,4 +74,45 @@ const pageDescription = `${t("cover.title.friends")} - ${t("cover.subTitle.frien
             <Content />
         </Markdown>
     </div>
+
+<style>
+    /* 名帖：竖排名字的老宋体签名 + 一方小印，hover 时印才盖上 */
+    .mingtie-spine {
+        writing-mode: vertical-rl;
+    }
+    .mingtie-name {
+        font-family: var(--serif-head);
+        font-size: 1rem;
+        letter-spacing: 0.26em;
+        line-height: 1;
+        color: var(--ink-strong);
+        max-height: 120px;
+        overflow: hidden;
+    }
+    .mingtie-seal {
+        width: 15px;
+        height: 15px;
+        display: grid;
+        place-items: center;
+        background: var(--accent);
+        color: var(--paper-sheet);
+        font-family: var(--serif-head);
+        font-size: 9px;
+        line-height: 1;
+        border-radius: 2px;
+        opacity: 0;
+        transform: rotate(-14deg) scale(1.5);
+        transition: opacity 0.25s ease, transform 0.32s cubic-bezier(0.2, 1.4, 0.4, 1);
+    }
+    .mingtie:hover .mingtie-seal {
+        opacity: 1;
+        transform: rotate(-4deg) scale(1);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .mingtie-seal {
+            transition: none;
+            transform: none;
+        }
+    }
+</style>
 </MainPageLayout>
