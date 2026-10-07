@@ -69,3 +69,8 @@ Xuan（宣）是一套中文博客主题，在 [Momo](https://github.com/Motues/
 * [Typora Xuan 主题](https://github.com/LLh-xuesj/typora-theme-xuan)（自家仓库）：配色与排版的出处
 * [Fuwari](https://github.com/saicaca/fuwari)
 * [Tyndall](https://github.com/moyuin-aka/tyndall-public)
+
+## 🖋 字体版权
+
+* 京华老宋体（标题）：非开源的免费商用字体，官方声明允许网页嵌入与自由复制传播，唯不可单独出售、不可修改后传播
+* 霞鹜文楷（正文）、EB Garamond（西文）：SIL OFL-1.1 开源字体
