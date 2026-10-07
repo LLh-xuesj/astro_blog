@@ -1,4 +1,6 @@
 ---
+import '@styles/twikoo.css'; // Twikoo 的 DOM 是运行时注入的，组件作用域样式够不着，只能全局覆盖
+
 interface Props {
   envId: string; 
   language?: string | 'zh-CN';
@@ -21,7 +23,8 @@ const { envId, postSlug, language } = Astro.props;
     if (!state.loading) {
       state.loading = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/twikoo@1.7.7/dist/twikoo.min.js';
+        // 自托管：Twikoo 要求前端与云函数版本一致，升级时同时替换这个文件与云函数
+        script.src = '/vendor/twikoo.min.js';
         script.async = true;
         script.onload = () => resolve(window.twikoo);
         script.onerror = () => {
@@ -64,7 +67,21 @@ const { envId, postSlug, language } = Astro.props;
     }
   }
 
-  initTwikoo();
+  // 评论在文末，多数读者滚不到底：进视口前不加载评论库（约 350 KB）
+  const container = document.getElementById('twikoo-comment');
+  const state = window.__momoTwikoo;
+  state.observer?.disconnect(); // 换页后旧容器已移除，旧观察者留着没意义
+  if (container && 'IntersectionObserver' in window) {
+    state.observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        state.observer.disconnect();
+        initTwikoo();
+      }
+    }, { rootMargin: '300px' });
+    state.observer.observe(container);
+  } else {
+    initTwikoo();
+  }
 </script>
 
 <style>

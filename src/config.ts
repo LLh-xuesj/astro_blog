@@ -22,9 +22,9 @@ export const siteConfig: SiteConfig = {
         enable: true // Whether to enable blog navigation in the blog footer
     },
     comments: {
-        enable: false, // ⚠️ 暂时下线。之前指向 Momo 作者的演示后端（访客评论会存到他的服务器）。要恢复：自建 https://github.com/Motues/Momo-Backend 后改回 true，或把 platform 改成 "twikoo"
-        platform: "default", // Comment platform, set "default" to use Momo-backend, also supports "twikoo"
-        backendUrl: "https://api-momo.motues.top"
+        enable: true, // 后端：Twikoo 云函数（Vercel + MongoDB Atlas），部署说明见 https://twikoo.js.org/backend.html
+        platform: "twikoo", // Comment platform, set "default" to use Momo-backend, also supports "twikoo"
+        backendUrl: "https://twikoo.xuesj.top"
     },
     theme: {
         AOS: true, // Whether to enable AOS (Animate On Scroll) for animations

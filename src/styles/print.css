@@ -126,4 +126,9 @@
     .blognavi {
         display: none !important;
     }
+
+    /* 评论区是屏幕上的往来，纸面只留正文 */
+    #twikoo-comment {
+        display: none !important;
+    }
 }
