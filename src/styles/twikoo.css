@@ -247,17 +247,29 @@
   border: 1px solid var(--paper-edge);
   border-radius: 50%;
   overflow: hidden;
+  /* 兜底尺寸：Twikoo 自带 CSS 万一缺席（swup 换页会把它注入的 style 摘掉），头像没有
+     尺寸约束，会被上面的圆角和底色撑成一张糊满屏幕的大饼——已经出过一次。 */
+  width: 40px;
+  height: 40px;
+  max-width: 40px;
+  max-height: 40px;
+  flex: 0 0 auto;
 }
 
 #twikoo-comment #twikoo .tk-avatar-img {
   border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   /* 头像压成暖灰，像旧照片印在纸上：Cravatar/WeAvatar 给陌生邮箱的默认头像是一块
      亮蓝，原样挂在纸面上非常跳。不想要这个效果删掉本行即可（真实头像也会恢复原色）。 */
   filter: grayscale(0.7) sepia(0.45) saturate(0.9);
 }
 
-/* 博主标记：做成小号朱印 */
-#twikoo-comment #twikoo .tk-master {
+/* 博主标记（Twikoo 2.x 里是 .tk-tag / .tk-tag-green，默认一坨翠绿）：做成小号朱印。
+   注意别写 .tk-master——那个类是打在**整条评论**上的「本条归博主」记号，
+   写成 .tk-master 会把整条评论刷成朱砂底（已踩过）。 */
+#twikoo-comment #twikoo .tk-tag {
   background-color: var(--accent-soft);
   border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--paper-edge));
   border-radius: 3px;
@@ -265,6 +277,26 @@
   font-size: 0.76em;
   letter-spacing: 0.08em;
   padding: 0 0.4em;
+}
+
+/* 博主自己的评论：一道朱砂左线做记号，一眼看得出是站长的回话。
+   比铺一层粉底克制得多——铺底那版试过，整条评论像贴了张红纸（已弃）。 */
+#twikoo-comment #twikoo .tk-comment.tk-master {
+  border-left: 2px solid color-mix(in srgb, var(--accent) 60%, var(--paper-edge));
+  padding-left: 0.55rem;
+}
+
+/* 博主自己的评论：头像固定成 public/avatar/master-240.jpg，不随邮箱哈希在 WeAvatar 上
+   换来换去（Twikoo 没有「博主头像」这个设置项，所以用背景图顶掉 <img>——背景画在子元素
+   之下，把 img 藏起来即可，各浏览器行为一致）。这张猫有意留着原色，不套上面的暖灰滤镜。 */
+#twikoo-comment #twikoo .tk-comment.tk-master .tk-avatar {
+  background-image: url('/avatar/master-240.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+#twikoo-comment #twikoo .tk-comment.tk-master .tk-avatar-img {
+  visibility: hidden;
 }
 
 /* 回复嵌套：一道淡边，不要 Twikoo 默认的灰底块 */

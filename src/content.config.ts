@@ -12,6 +12,9 @@ const blogCollection = defineCollection({
         image: z.string().optional().default(''),
         slugId: z.string(),
         category: z.string().optional(),
+        // 标签：旧文迁过来时带着 tags。站点目前还没有标签页/按标签筛选的 UI，
+        // 先原样存在 frontmatter 里不让它被 schema 丢掉，将来要做标签页时数据是齐的。
+        tags: z.array(z.string()).optional().default([]),
         pinTop: z.number().optional().default(0),
     }),
 })

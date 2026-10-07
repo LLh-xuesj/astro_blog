@@ -5,6 +5,12 @@ export interface Translation {
         murmurs: string;
         about: string;
         friends: string;
+        tags: string;
+    };
+    tags: {
+        all: string;
+        empty: string;
+        hint: string;
     };
     cover: {
         title: {

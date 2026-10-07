@@ -3,7 +3,6 @@ import '@styles/global.css'
 import { siteConfig, licenseConfig, profileConfig } from '@/config'
 import MainPageLayout from '@layouts/MainPageLayout.astro'
 import Markdown from '@components/misc/Markdown.astro'
-import ImageModule from '@components/misc/ImageModule.astro'
 import FabMenu from '@components/control/FabMenu.astro'
 import SignOff from '@components/SignOff.astro'
 import Seal from '@components/Seal.astro'
@@ -19,7 +18,7 @@ import { i18n } from "astro:config/client";
 import i18nit from '@i18n/translation'
 import { Icon } from "astro-icon/components";
 
-import { blogCoverUrl } from '@utils/urlUtils'
+
 import { formatFullDate } from '@/utils/time'
 import { cnReadingTime, cnYearMonth } from '@utils/cnText'
 import { getBlogEntrySort } from '@utils/contentUtils'
@@ -78,7 +77,6 @@ const { entry, prev, next, related } = Astro.props;
 const { Content, headings } = await render(entry); // 获取渲染后的正文内容
 
 const pageTitle = entry.data.title + ' - ' + siteConfig.title;
-const image = blogCoverUrl(entry.data.image, entry.id);
 
 const { remarkPluginFrontmatter } = await render(entry);
 
@@ -147,12 +145,6 @@ const postJsonLd = articleJsonLd({
                 </div>
             </div>
         </div>
-        {image && (
-            <div class="cover overflow-hidden">
-                {/* 文章封面通常就是本页的 LCP 元素：优先加载 */}
-                <ImageModule src={image} alt={entry.data.title} class="w-full h-full object-cover" priority />
-            </div>
-        )}
         {entry.data.draft && (
         <div class="my-8 flex items-start gap-3 rounded-lg border border-[var(--danger-border-color)] bg-[var(--danger-bg-color)] p-4 text-sm text-[var(--danger-text-color)] transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0 opacity-80">

@@ -161,28 +161,6 @@ const className = Astro.props.class
 
   // 图注装裱：一段里只有一张带 alt 的图时，把「段落」升格成 figure，
   // alt 落成图注小字。灯箱会读 figcaption，放大时图注跟着进幕布。
-  function setupFigureCaptions() {
-    document.querySelectorAll('.markdown-content img[alt]').forEach((img) => {
-      const alt = img.getAttribute('alt')?.trim();
-      if (!alt) return; // 空 alt 是装饰图，不是「有款识的画」
-      const parent = img.parentElement;
-      if (!parent || parent.tagName !== 'P') return;
-      // 段落里还有别的元素/文字就不动它（行内图文混排不是「一幅画」）
-      const onlyChild = Array.from(parent.childNodes).every(
-        (n) => n === img || (n.nodeType === Node.TEXT_NODE && !n.textContent?.trim()),
-      );
-      if (!onlyChild || img.closest('a, figure, .image-collage')) return;
-      // 挂专属类：Expressive Code 的代码块也是 figure.frame，样式不能误伤
-      const figure = document.createElement('figure');
-      figure.className = 'xuan-captioned';
-      const caption = document.createElement('figcaption');
-      caption.textContent = alt;
-      parent.replaceWith(figure);
-      figure.append(img, caption);
-    });
-  }
-
-  registerPageInit(setupFigureCaptions);
 
 </script>
 

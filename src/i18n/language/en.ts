@@ -8,6 +8,12 @@ const translation: Translation = {
         murmurs: "Murmurs",
         about: "About",
         friends: "Friends",
+        tags: "Tags",
+    },
+    tags: {
+        all: "All",
+        empty: "No posts carry this tag yet",
+        hint: "Tap a tag to see only the posts that carry it",
     },
     cover: i18nConfig.translations["en"].Cover,
     toc: "Contents",

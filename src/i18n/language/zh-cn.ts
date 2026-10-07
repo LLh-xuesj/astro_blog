@@ -8,6 +8,12 @@ const translation: Translation = {
         murmurs: "碎碎念",
         about: "关于",
         friends: "友链",
+        tags: "标签",
+    },
+    tags: {
+        all: "全部",
+        empty: "这个标签下还没有文章",
+        hint: "点标签只看带它的文章",
     },
     cover: i18nConfig.translations["zh-cn"].Cover,
     toc: "目录",

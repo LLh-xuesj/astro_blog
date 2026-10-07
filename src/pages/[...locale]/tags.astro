@@ -1,0 +1,38 @@
+---
+import MainPageLayout from '@layouts/MainPageLayout.astro'
+import TagsPanel from '@components/TagsPanel.svelte'
+import FabMenu from '@components/control/FabMenu.astro'
+import { siteConfig } from '@/config'
+import { getBlogEntrySort } from '@utils/contentUtils'
+import i18nit from '@i18n/translation'
+import { i18n } from "astro:config/client";
+
+const currentLang = Astro.currentLocale || i18n!.defaultLocale;
+const t = i18nit(currentLang);
+
+export async function getStaticPaths() {
+	return i18n?.locales.map(locale => ({ params: { locale: locale == i18n?.defaultLocale ? undefined : (locale as string) } }));
+}
+
+// 标签页只需要 id/title/pubDate/tags，不用渲染正文，所以不取字数
+const allBlogPosts = await getBlogEntrySort(currentLang);
+
+const allTags = new Set(allBlogPosts.flatMap((post) => post.data.tags ?? []));
+
+const pageTitle = t("header.tags") + " - " + siteConfig.title;
+// SEO：用该页 Cover 文案（含标签总数）当描述，避免多页共用同一段
+const pageDescription = `${t("cover.title.tags")} - ${t("cover.subTitle.tags", { count: allTags.size })}`;
+---
+
+<MainPageLayout title={pageTitle} lang={currentLang} description={pageDescription}>
+    <TagsPanel
+        client:visible
+        sortedPosts={allBlogPosts}
+        currentLang={currentLang}
+        defaultLocale={i18n!.defaultLocale}
+    />
+    <!-- fixed 浮层：留在 swup 容器内，但在淡入淡出元素之外（见 MainPageLayout 的说明） -->
+    <div slot="overlay">
+        <FabMenu showBackBottom={true} />
+    </div>
+</MainPageLayout>

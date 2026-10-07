@@ -453,26 +453,23 @@
   border-radius: 3px;
 }
 
-/* 图注装裱：Markdown.astro 的脚本把「一段一图 + alt」升格成 figure.xuan-captioned，
-   alt 落成图注小字——像画上题的那一行款识。灯箱会读 figcaption。
-   注意别写成裸 figure：Expressive Code 的代码块框也是 figure。 */
-.markdown-content figure.xuan-captioned {
+/* 图注装裱：主题的 customFigurePlugin（src/plugins/rehype-figure-plugin.ts）会给带 title 的图片
+   生成 <figcaption>，写法是 `![替代文字](图 "图注")`，这里把它调成画上题的那一行款识。
+   注意排除 Expressive Code 的代码块框：那也是 figure，而且它拿 figcaption 装标题栏。 */
+.markdown-content figure:not(.frame):has(> figcaption) {
   margin: 1.4rem auto;
   text-align: center;
 }
 
-.markdown-content figure.xuan-captioned img {
-  margin-bottom: 0.55rem;
-}
-
-.markdown-content figure.xuan-captioned figcaption {
+.markdown-content figure:not(.frame) > figcaption {
   font-family: var(--serif);
   font-size: 0.86rem;
   letter-spacing: 0.05em;
   line-height: 1.5;
   color: var(--ink-mute);
   max-width: 85%;
-  margin: 0 auto;
+  margin: 0.55rem auto 0;
+  text-align: center;
 }
 
 /* 连续图片自动拼图（插件 src/plugins/rehype-image-collage.mjs，开关见 siteConfig.theme.imageCollage）

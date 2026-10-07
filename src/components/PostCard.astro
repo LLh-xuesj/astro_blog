@@ -40,65 +40,60 @@ const isBgMode = siteConfig.theme.postCard.imageMode === "background";
 
 <div class="post-card-wrap" data-aos="fade-up">
 <div class:list={["post-card xuan-paper relative block min-w-0 w-full overflow-hidden", isBgMode && "postcard-bg-mode", isBgMode && image && "has-image"]}>
-    {/* 无封面图的卡：左侧一条竖排题签代替横排大标题，像插在纸上的一枚书签 */}
-    {!image && (
-        <a href={pageUrl} class="tientie" aria-label={title}>
-            <span class="tientie-text">{title}</span>
-            <span class="tientie-seal" aria-hidden="true">宣</span>
-        </a>
-    )}
-    {image && (
-        <>
-        {isBgMode ? (
+    {/* 左侧一条竖排题签：有没有封面都插同一枚书签，卡片看起来是一套东西。
+        悬停时签脚盖一枚小「宣」印，见 .tientie-seal */}
+    <a href={pageUrl} class="tientie" aria-label={title}>
+        {entry.data.pinTop > 0 && <Icon name="fluent:pin-24-filled" class="tientie-pin" />}
+        <span class="tientie-text">{title}</span>
+        <span class="tientie-seal" aria-hidden="true">宣</span>
+    </a>
+    {/* 右侧：有封面就上图上文，没封面就只是一段文字 */}
+    <div class="tientie-content">
+        {image && (isBgMode ? (
             <div class="bg-image">
                 <ImageModule src={image} alt={title} class="w-full h-full" priority={priority} />
             </div>
         ) : (
-            <a href={pageUrl} class="cover h-60 overflow-hidden hover-scale block">
+            <a href={pageUrl} class="cover card-cover overflow-hidden hover-scale block">
                 <ImageModule src={image} alt={title} class="w-full h-full object-cover" priority={priority} />
             </a>
-        )}
-        </>
-    )}
-    <div class:list={["content p-6", !image && "tientie-content"]}>
-        {image && (
-        <a href={pageUrl} class="title text-xl font-semibold text-[var(--text-color)] mb-3 hover:text-[var(--link-color)] active:text-[var(--link-color)] flex items-center group transition-colors duration-300 ease-in-out">
-            <span class="flex items-center">
-                {entry.data.pinTop > 0 && <Icon name="fluent:pin-24-filled" class="mr-1" />} {title}
-            </span>
-            <Icon
-                name="fa6-solid:angle-right"
-                class="ml-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transform md:translate-x-[-5px] md:group-hover:translate-x-0 transition duration-300 ease-in-out text-[var(--text-color)] group-hover:text-[var(--link-color)] group-active:text-[var(--link-color)]"
-            />
-        </a>
-        )}
-        <p class="description text-[var(--text-color-70)] leading-relaxed mt-2">
-            {
-                fallback && (
-                <span class="self-center px-1 mr-2 text-sm text-[var(--text-color-70)] font-mono uppercase bg-[var(--button-hover-color)] rounded border border-[var(--button-border-color)]">{i18n!.defaultLocale}</span>
-                )
-            }
-            {description}
-        </p>
-        <div class="flex items-center justify-start text-sm text-[var(--text-color-70)] mt-4 space-x-4">
-            <p class="pubdate flex items-center whitespace-nowrap">
-                <Icon name="fa6-solid:calendar-days" class="mr-1"></Icon>
-                <span class="py-1 px-1">{formatFullDate(pubDate, currentLang)}</span>
+        ))}
+        <div class="content p-6">
+            <p class="description text-[var(--text-color-70)] leading-relaxed">
+                {
+                    fallback && (
+                    <span class="self-center px-1 mr-2 text-sm text-[var(--text-color-70)] font-mono uppercase bg-[var(--button-hover-color)] rounded border border-[var(--button-border-color)]">{i18n!.defaultLocale}</span>
+                    )
+                }
+                {description}
             </p>
-        </div>
-        <div class="flex flex-wrap items-center justify-start text-sm text-[var(--text-color-70)] mt-2 gap-2">
-            <p class="words flex items-center whitespace-nowrap mr-2">
-                <Icon name="fa6-solid:pen-nib" class="mr-1"></Icon>
-                <span class="py-1 px-1">{cnNumber(remarkPluginFrontmatter.words || 0)}{t("pagecard.words")}</span>
-            </p>
-            <p class="reading-time flex items-center whitespace-nowrap mr-2">
-                <Icon name="fa6-solid:clock" class="mr-1"></Icon>
-                <span class="py-1 px-1">{cnReadingTime(remarkPluginFrontmatter.minutes || 0)}</span>
-            </p>
-            <p class="flex items-center whitespace-nowrap mr-2">
-                <Icon name="fa6-solid:hashtag" class="mr-1"></Icon>
-                <a href={getRelativeLocaleUrl(currentLang, `/archives/?category=${entry.data.category}`)} class="category-tag">{entry.data.category || t("pagecard.uncategorized")}</a>
-            </p>
+            <div class="flex items-center justify-start text-sm text-[var(--text-color-70)] mt-4 space-x-4">
+                <p class="pubdate flex items-center whitespace-nowrap">
+                    <Icon name="fa6-solid:calendar-days" class="mr-1"></Icon>
+                    <span class="py-1 px-1">{formatFullDate(pubDate, currentLang)}</span>
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center justify-start text-sm text-[var(--text-color-70)] mt-2 gap-2">
+                <p class="words flex items-center whitespace-nowrap mr-2">
+                    <Icon name="fa6-solid:pen-nib" class="mr-1"></Icon>
+                    <span class="py-1 px-1">{cnNumber(remarkPluginFrontmatter.words || 0)}{t("pagecard.words")}</span>
+                </p>
+                <p class="reading-time flex items-center whitespace-nowrap mr-2">
+                    <Icon name="fa6-solid:clock" class="mr-1"></Icon>
+                    <span class="py-1 px-1">{cnReadingTime(remarkPluginFrontmatter.minutes || 0)}</span>
+                </p>
+                <p class="flex items-center whitespace-nowrap mr-2">
+                    <Icon name="fa6-solid:hashtag" class="mr-1"></Icon>
+                    <a href={getRelativeLocaleUrl(currentLang, `/archives/?category=${entry.data.category}`)} class="category-tag">{entry.data.category || t("pagecard.uncategorized")}</a>
+                </p>
+                {/* 标签：卡片底部几枚浅色小签（最多 3 枚，多的折成 +N），点进标签页 */}
+                {(entry.data.tags ?? []).slice(0, 3).map((tag) => (
+                    <a href={getRelativeLocaleUrl(currentLang, `/tags/?tag=${encodeURIComponent(tag)}`)} class="card-tag">{tag}</a>
+                ))}
+                {(entry.data.tags?.length ?? 0) > 3 && (
+                    <span class="card-tag-more">+{entry.data.tags.length - 3}</span>
+                )}
+            </div>
         </div>
     </div>
     {/* 整卡点击热区：一张铺满卡面的透明覆盖 <a>，点卡片任何位置都进文章。
@@ -173,7 +168,7 @@ const isBgMode = siteConfig.theme.postCard.imageMode === "background";
   z-index: 4;
 }
 
-/* ===== 题签：无封面卡左侧的竖排书签 ===== */
+/* ===== 题签：卡片左侧的竖排书签（有封面也插同一枚） ===== */
 .tientie {
   position: absolute;
   left: 0;
@@ -187,6 +182,18 @@ const isBgMode = siteConfig.theme.postCard.imageMode === "background";
   border-right: 1px dashed var(--paper-edge);
   background: color-mix(in srgb, var(--paper-deep) 42%, transparent);
   text-decoration: none;
+  z-index: 4; /* 浮在整卡点击热区之上，题签仍是可点的真链接 */
+}
+
+/* 置顶标记：钉在题签最上头 */
+.tientie-pin {
+  margin-bottom: 8px;
+  opacity: 0.7;
+}
+
+/* 有封面的卡：图在上、文在下。高度跟着卡片宽度收放，窄屏不至于把图压成一条 */
+.card-cover {
+  height: clamp(150px, 20vw, 230px);
 }
 
 .tientie-text {
@@ -270,12 +277,38 @@ const isBgMode = siteConfig.theme.postCard.imageMode === "background";
   text-shadow: 0.5px 0 0 currentColor, -0.5px 0 0 currentColor;
 }
 
+/* 标签小签：比分类更轻的一层，浅纸底 + 细边，点进 /tags 过滤 */
+.card-tag {
+  font-family: var(--serif);
+  font-size: 0.74rem;
+  line-height: 1.75;
+  padding: 0 0.5em;
+  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--paper-edge) 88%, transparent);
+  background: color-mix(in srgb, var(--paper-deep) 45%, transparent);
+  color: var(--ink-mute);
+  text-decoration: none;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.card-tag:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--paper-edge));
+}
+
+.card-tag-more {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-mute);
+}
+
 /* ===== 背景图模式：图片作为卡片背景，从右向左非线性渐隐 ===== */
 .postcard-bg-mode {
   position: relative;
 }
 
-.postcard-bg-mode > .bg-image {
+.postcard-bg-mode .bg-image {
   position: absolute;
   top: 0;
   right: 0;
@@ -284,7 +317,7 @@ const isBgMode = siteConfig.theme.postCard.imageMode === "background";
   z-index: 0;
 }
 
-.postcard-bg-mode > .bg-image .image-wrapper {
+.postcard-bg-mode .bg-image .image-wrapper {
   width: 100%;
   height: 100%;
   opacity: 0.7; /* 图片整体保持一定透明度，避免与文字抢视觉 */
@@ -294,24 +327,24 @@ const isBgMode = siteConfig.theme.postCard.imageMode === "background";
           mask-image: linear-gradient(to left, #000 0%, #000 35%, rgba(0,0,0,0.85) 44%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.15) 55%, transparent 60%, transparent 100%);
 }
 
-.postcard-bg-mode:hover > .bg-image .image-wrapper {
+.postcard-bg-mode:hover .bg-image .image-wrapper {
   transform: scale(1.03);
 }
 
-.postcard-bg-mode > .content {
+.postcard-bg-mode .content {
   position: relative;
   z-index: 1;
 }
 
 /* 移动端：图片从上到下渐变、约一半位置消失，顶部留白展示图片，卡片整体加高 */
 @media (max-width: 640px) {
-  .postcard-bg-mode.has-image > .bg-image .image-wrapper {
+  .postcard-bg-mode.has-image .bg-image .image-wrapper {
     -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.5) 48%, rgba(0,0,0,0.15) 55%, transparent 60%, transparent 100%);
             mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.5) 48%, rgba(0,0,0,0.15) 55%, transparent 60%, transparent 100%);
   }
 
   /* 顶部留白区域展示图片，文字从下方开始，卡片更高 */
-  .postcard-bg-mode.has-image > .content {
+  .postcard-bg-mode.has-image .content {
     padding-top: 6rem;
   }
 }

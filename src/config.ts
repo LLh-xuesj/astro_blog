@@ -55,7 +55,7 @@ export const siteConfig: SiteConfig = {
 }
 
 export const profileConfig: ProfileConfig = {
-    avatar: "/favicon/xuan-seal-180.png", // 头像：目前先用主题的印章图标顶着，换成你自己的图片后改这里（放 src/assets/ 写相对路径，或放 public/ 写 /开头的路径）
+    avatar: "/avatar/master-512.jpg", // 头像：public/avatar/ 下有两套尺寸（512 与 240，240 那份给评论区用）
     name: "xuesj", // Used in the footer of the blog
     description: "xuesj 的个人博客——把日子写在纸上：读过的书、走过的路、想过的事", // Used in SEO
     indexPage: "https://xuesj.top", // 个人主页（区别于博客域名 blog.xuesj.top），页脚署名与 SEO 用
@@ -80,13 +80,15 @@ export const i18nConfig: I18nConfig = {
                     murmurs: "碎碎念",
                     about: "关于",
                     friends: "友链",
+                    tags: "标签",
                 },
                 subTitle: {
                     home: "读过的书，走过的路，想过的事",
                     archive: "共 {count} 篇文章", // {count} will be replaced with the total number of articles
                     murmurs: "一些没长成文章的念头",
                     about: "以宣纸为底，以墨为字",
-                    friends: "有趣的灵魂"
+                    friends: "有趣的灵魂",
+                    tags: "共 {count} 枚标签",
                 }
             }
         },
@@ -98,6 +100,7 @@ export const i18nConfig: I18nConfig = {
                     murmurs: "Murmurs",
                     about: "About",
                     friends: "Friends",
+                    tags: "Tags",
                 },
                 subTitle: {
                     home: "Books read, roads taken, thoughts had",
@@ -105,6 +108,7 @@ export const i18nConfig: I18nConfig = {
                     murmurs: "Thoughts too small for a post",
                     about: "Paper as the ground, ink as the letters",
                     friends: "Interesting Souls",
+                    tags: "{count} tags in all",
                 }
             }
         }

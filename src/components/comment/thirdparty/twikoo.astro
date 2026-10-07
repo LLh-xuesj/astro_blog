@@ -16,17 +16,41 @@ const { envId, postSlug, language } = Astro.props;
   // 用 define:vars 注入文章参数，所以这个脚本必须是 is:inline。
   window.__momoTwikoo = window.__momoTwikoo || { loading: null };
 
+  /** 评论库里带着一段内联 CSS，加载时会注入 <head>。swup 换页会把这类运行时插入的
+   *  节点清掉，而库整个会话只加载一次、不会再注入——于是新页面的评论区裸奔
+   *  （头像没有尺寸约束，被我们的圆角+底色撑成一张大饼，已经出过这个洋相）。
+   *  记下库里注入的节点，每次初始化前补回去。 */
+  function captureLibStyles() {
+    const state = window.__momoTwikoo;
+    const baseline = state.headBaseline ?? [];
+    const injected = [...document.head.querySelectorAll('style')].filter((s) => !baseline.includes(s));
+    if (injected.length) state.libStyles = injected;
+  }
+
+  function ensureLibStyles() {
+    for (const node of window.__momoTwikoo.libStyles ?? []) {
+      if (!node.isConnected) document.head.appendChild(node);
+    }
+  }
+
   /** 评论库整个会话只加载一次（重复 append <script src> 会重复执行整个库） */
   function loadTwikooLib() {
-    if (window.twikoo) return Promise.resolve(window.twikoo);
     const state = window.__momoTwikoo;
+    if (window.twikoo) {
+      ensureLibStyles(); // 换页后把库的 CSS 补回来
+      return Promise.resolve(window.twikoo);
+    }
     if (!state.loading) {
+      state.headBaseline = [...document.head.querySelectorAll('style')];
       state.loading = new Promise((resolve, reject) => {
         const script = document.createElement('script');
         // 自托管：Twikoo 要求前端与云函数版本一致，升级时同时替换这个文件与云函数
         script.src = '/vendor/twikoo.min.js';
         script.async = true;
-        script.onload = () => resolve(window.twikoo);
+        script.onload = () => {
+          captureLibStyles();
+          resolve(window.twikoo);
+        };
         script.onerror = () => {
           state.loading = null; // 允许下一篇文章重试
           reject(new Error('twikoo 脚本加载失败'));
@@ -56,12 +80,14 @@ const { envId, postSlug, language } = Astro.props;
       }
       // 库是异步加载的，期间用户可能已经跳到别的页面：节点已经不在文档里就别再初始化
       if (!el.isConnected) return;
+      ensureLibStyles(); // 换页后 <head> 被重建过：先把库自己的 CSS 放回去再渲染
       twikoo.init({
         envId: envId,
         el: '#twikoo-comment',
         path: postSlug,
         lang: language
       });
+      captureLibStyles(); // 有的版本是 init 时才注入 CSS，兜一下
     } catch (error) {
       console.warn('[twikoo] 评论初始化失败:', error);
     }
