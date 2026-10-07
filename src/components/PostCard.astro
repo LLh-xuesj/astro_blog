@@ -8,6 +8,7 @@ import { render } from 'astro:content'
 import { getRelativeLocaleUrl } from '@utils/urlUtils';
 import { formatFullDate } from '@/utils/time'
 import { cnNumber, cnReadingTime } from '@utils/cnText'
+import { railTitleFor } from '@utils/railTitle.js'
 
 import { siteConfig } from '@/config';
 import { i18n } from "astro:config/client";
@@ -37,18 +38,9 @@ const { remarkPluginFrontmatter } = await render(entry);
 // 首页文章卡片封面图模式："background" 将图片作为卡片背景，从右向左渐隐
 const isBgMode = siteConfig.theme.postCard.imageMode === "background";
 
-// 题签（左侧竖排墨条）只刻「中文主词」：竖排里拉丁字母和数字会侧躺，型号前缀
-// （CSP-J-2023 T1-）挂在竖排里既难读又占地方。规则：标题本来就是纯中文就用整条，
-// 否则取最后一段中文；不满意就在 frontmatter 写 railTitle 覆盖。
-function railTextFrom(title: string, override?: string) {
-    if (override) return override;
-    if (!/[A-Za-z0-9]/.test(title)) return title;
-    const tail = title.match(/[一-龥][一-龥，。、·！？：]*$/);
-    return (tail?.[0] ?? title).trim();
-}
-// 题签竖排最多容得下 8 字（.tientie-text 高 210px），超了截断，完整标题横排显示
-const railTextRaw = railTextFrom(entry.data.title, entry.data.railTitle);
-const railText = railTextRaw.length > 8 ? railTextRaw.slice(0, 8) : railTextRaw;
+// 题签只刻「中文主词」，规则见 @utils/railTitle（新建文章的脚手架用同一个函数把结果
+// 填进 frontmatter 的 railTitle）
+const railText = railTitleFor(entry.data.title, entry.data.railTitle);
 // 题签已经是完整标题时就不再横排重复一遍（如「你好，宣」）
 const showTitleInContent = railText !== entry.data.title;
 ---

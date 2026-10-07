@@ -2,6 +2,8 @@
 import { writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { c, ensureDir, fail, fromRoot, log, pathExists, relPath } from '../lib.js'
+// 题签短标题的规则与首页卡片共用（src/components/PostCard.astro 也引它），别在两边各抄一份
+import { railTitleFor } from '../../../src/utils/railTitle.js'
 
 const LANGS = ['zh-cn', 'en']
 
@@ -27,6 +29,7 @@ export default {
   details: [
     '创建 src/content/blog/<路径>/<语言>.md，并写入符合 schema 的 frontmatter。',
     '路径省略时按日期生成，例如 2026/2026-09-10。',
+    'railTitle 是首页卡片竖排题签上的短题，按标题自动生成（取中文主词），可直接改。',
   ].join('\n'),
   options: {
     lang: { type: 'string', desc: `语言版本，默认 zh-cn（可选 ${LANGS.join(' / ')}）` },
@@ -51,15 +54,20 @@ export default {
 
     const title = flags.title ?? path.split('/').pop()
     const today = new Date().toISOString().slice(0, 10)
+    // 题签短题按标题自动填好（规则见 src/utils/railTitle.js）；不满意直接改这一行，
+    // 删掉也行——卡片会自动从标题里取中文段。
+    const railTitle = railTitleFor(title)
     const frontmatter = [
       '---',
       `title: ${yaml(title)}`,
+      `railTitle: ${yaml(railTitle)}`,
       `pubDate: ${today}`,
       'description: ""',
       'image: ""',
       `draft: ${flags.draft ? 'true' : 'false'}`,
       `slugId: ${yaml(path)}`,
       `category: ${yaml(flags.category ?? '')}`,
+      'tags: []',
       'pinTop: 0',
       '---',
       '',
@@ -73,6 +81,7 @@ export default {
 
     log.raw()
     log.ok(`已创建文章：${c.bold(relPath(file))}`)
+    log.info(c.gray(`卡片题签刻「${railTitle}」（frontmatter 的 railTitle，不满意直接改）`))
     log.info(c.gray('用 pnpm dev 预览，或用 pnpm cms 在管理后台里编辑'))
   },
 }
