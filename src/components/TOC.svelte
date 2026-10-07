@@ -118,21 +118,23 @@
 	class="fixed top-20 w-[var(--toc-width)] left-[var(--toc-offset-left)] z-10 hidden lg:block text-[var(--text-color)] transition-[opacity,visibility] duration-300 {tocVisible ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}"
 >
 	<div class="flex flex-col h-[50vh] bg-transparent">
-		<h2 id="toc-heading" class="text-lg font-bold mb-2 uppercase tracking-widest">
+		<h2 id="toc-heading" class="toc-heading">
+			<span class="toc-heading-dot" aria-hidden="true"></span>
 			{t("toc")}
 		</h2>
 
-		<ul 
+		<ul
 			bind:this={tocListElement}
-			class="overflow-y-auto space-y-2 pr-4 no-scrollbar"
+			class="overflow-y-auto space-y-2 pr-2 no-scrollbar"
 			style="scrollbar-width: none; scroll-behavior: smooth;"
 		>
 			{#each filteredHeadings as heading, i}
 				<li>
 					<a
 						href={`#${heading.slug}`}
-						class="block py-1 text-sm transition-colors duration-300 hover:text-[var(--link-color)]"
-						style:padding-left="{(heading.depth - minDepth) * 1.2}rem" 
+						class:active={i === activeIndex}
+						class="toc-sign"
+						style:padding-left="{0.85 + (heading.depth - minDepth) * 1.1}rem"
 						style={getSpringStyle(i, $focusSpring)}
 						onclick={(e) => {
 							e.preventDefault();
@@ -152,11 +154,91 @@
 	.no-scrollbar::-webkit-scrollbar {
 		display: none;
 	}
-	
+
+	/* ===== 目录纸签：右侧目录做成夹在书里的一叠纸签 =====
+	   每条一枚小签（纸面 + 细纸边），读到哪节哪支凸出、
+   行首墨点变朱砂——正文是雕版书页，侧栏就是夹签子的那册书脊 */
+
+	.toc-heading {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		margin-bottom: 0.7rem;
+		font-family: var(--serif-head);
+		font-weight: 400;
+		font-size: 1.05rem;
+		letter-spacing: 0.16em;
+		color: var(--ink-strong);
+	}
+
+	.toc-heading-dot {
+		width: 7px;
+		height: 7px;
+		background: var(--accent);
+		border-radius: 1.5px;
+		transform: rotate(45deg);
+		flex: none;
+	}
+
 	a {
 		display: block;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+
+	.toc-sign {
+		position: relative;
+		padding-top: 0.42rem;
+		padding-bottom: 0.42rem;
+		padding-right: 0.7rem;
+		border-radius: 2px;
+		background: color-mix(in srgb, var(--paper-sheet) 72%, transparent);
+		border: 1px solid color-mix(in srgb, var(--paper-edge) 72%, transparent);
+		box-shadow: 0 1px 2px rgba(70, 60, 45, 0.07);
+		font-family: var(--serif);
+		transition:
+			transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1),
+			background-color 0.25s ease,
+			border-color 0.25s ease,
+			box-shadow 0.25s ease;
+	}
+
+	/* 行首空心墨点：读到该节时变实心朱砂 */
+	.toc-sign::before {
+		content: '';
+		position: absolute;
+		left: 0.34rem;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 5px;
+		height: 5px;
+		border: 1px solid var(--ink-mute);
+		border-radius: 50%;
+		transition: background-color 0.25s ease, border-color 0.25s ease;
+	}
+
+	/* 当前小节：签子凸出来，墨点变朱砂，纸面加深一点 */
+	.toc-sign.active {
+		transform: translateX(8px);
+		background: var(--paper-deep);
+		border-color: color-mix(in srgb, var(--accent) 45%, var(--paper-edge));
+		box-shadow: 0 2px 5px rgba(70, 60, 45, 0.13);
+	}
+
+	.toc-sign.active::before {
+		background: var(--accent);
+		border-color: var(--accent);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.toc-sign,
+		.toc-sign::before {
+			transition: none;
+		}
+
+		.toc-sign.active {
+			transform: none;
+		}
 	}
 </style>

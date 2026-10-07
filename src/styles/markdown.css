@@ -1034,16 +1034,211 @@ rt {
 }
 
 /* ===========================================================================
- * 雕版界栏（试探版）：文章正文外围一圈极淡的界格
- * 只给加了 .xuan-banxin 的正文用（博客文章页），关于页等不受影响。
- * 双线：外圈一道 hairline，内圈隔 3px 再一道更淡的——雕版书版心的双栏。
+ * 雕版界栏：一页摊在案上的雕版书——
+ *   朱笔手绘界格（四边微起伏、四角出锋交叉）＋ 版心鱼尾夹着分类纪年 ＋
+ *   左下一道飞白笔痕 ＋ 上缘一对镇纸 ＋ 右界半枚骑缝章。
+ * 只给加了 .xuan-banxin 的正文用（博客文章页），装饰元素由文章页注入 ornament 插槽。
  * =========================================================================== */
 .markdown-content.xuan-banxin {
     position: relative;
-    border: 1px solid color-mix(in srgb, var(--paper-edge) 85%, transparent);
-    outline: 1px solid color-mix(in srgb, var(--paper-edge) 45%, transparent);
-    outline-offset: 3px;
-    padding: clamp(0.9rem, 3vw, 1.7rem) clamp(0.85rem, 2.6vw, 1.6rem);
-    margin-top: 1.25rem;
+    border: none;
+    outline: none;
+    padding: clamp(1.5rem, 3.4vw, 2.1rem) clamp(1.2rem, 3vw, 2rem);
+    margin-top: 1.5rem;
     border-radius: 0;
+}
+
+/* —— 朱笔界格：四条手绘边（SVG 条带，non-scaling-stroke 保持笔宽） —— */
+.markdown-content .banxin-edge {
+    position: absolute;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.markdown-content .banxin-edge path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-opacity: 0.6;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.markdown-content .banxin-edge-top {
+    top: -10px;
+    left: -12px;
+    width: calc(100% + 24px);
+    height: 20px;
+}
+
+.markdown-content .banxin-edge-bottom {
+    bottom: -10px;
+    left: -12px;
+    width: calc(100% + 24px);
+    height: 20px;
+}
+
+.markdown-content .banxin-edge-left {
+    left: -10px;
+    top: -12px;
+    width: 20px;
+    height: calc(100% + 24px);
+}
+
+.markdown-content .banxin-edge-right {
+    right: -10px;
+    top: -12px;
+    width: 20px;
+    height: calc(100% + 24px);
+}
+
+/* —— 装饰图层：ornament 插槽内容的统一容器，铺满正文框但不参与 AOS 入场 —— */
+.markdown-content .banxin-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* —— 版心：界线到正中收进一对鱼尾（尾尖沿界线向外指），
+      夹着分类纪年——让居中这件事看起来是「界格长出来的」，不是贴上去的。
+      居中用 margin-inline 而不是 translate，谁也别想把它动画走 —— */
+.markdown-content .banxin-xin {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: fit-content;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0 0.55rem;
+    background: var(--paper);
+    font-family: var(--serif-head);
+    font-size: 0.78rem;
+    letter-spacing: 0.16em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.markdown-content .banxin-xin svg {
+    width: 15px;
+    height: 12px;
+    fill: var(--ink-strong);
+    opacity: 0.85;
+    flex: none;
+}
+
+/* 尾尖沿界线向外：左鱼尾指左、右鱼尾指右（原形尾尖朝下） */
+.markdown-content .banxin-xin svg.banxin-yw-l {
+    transform: rotate(90deg);
+}
+
+.markdown-content .banxin-xin svg.banxin-yw-r {
+    transform: rotate(-90deg);
+}
+
+/* —— 飞白扫痕：左下角一道扫出界外的枯笔 —— */
+.markdown-content .banxin-sweep {
+    position: absolute;
+    left: -16px;
+    bottom: -20px;
+    width: 150px;
+    height: 90px;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.markdown-content .banxin-sweep path {
+    fill: var(--ink-strong);
+}
+
+.markdown-content .banxin-sweep-1 {
+    opacity: 0.15;
+}
+
+.markdown-content .banxin-sweep-2 {
+    opacity: 0.09;
+}
+
+.markdown-content .banxin-sweep-3 {
+    opacity: 0.06;
+}
+
+/* —— 镇纸一对：墨玉条身、藤黄铜头，压住顶界两端 —— */
+.markdown-content .banxin-zhenzhi {
+    position: absolute;
+    top: -13px;
+    width: 74px;
+    height: 13px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #3d372f 0%, #262019 55%, #362f27 100%);
+    box-shadow: 0 3px 6px rgba(50, 40, 30, 0.3), 0 1px 2px rgba(50, 40, 30, 0.25);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.markdown-content .banxin-zhenzhi::before,
+.markdown-content .banxin-zhenzhi::after {
+    content: '';
+    position: absolute;
+    top: 1.5px;
+    bottom: 1.5px;
+    width: 7px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, var(--gold-deep), color-mix(in srgb, var(--gold-deep) 55%, #6b5518));
+}
+
+.markdown-content .banxin-zhenzhi::before {
+    left: 2px;
+}
+
+.markdown-content .banxin-zhenzhi::after {
+    right: 2px;
+}
+
+.markdown-content .banxin-pw-l {
+    left: 28px;
+    transform: rotate(-0.7deg);
+}
+
+.markdown-content .banxin-pw-r {
+    right: 28px;
+    transform: rotate(0.6deg);
+}
+
+/* —— 骑缝章：半枚印骑在右界上（印体自带旋转） —— */
+.markdown-content .banxin-qifeng {
+    position: absolute;
+    right: 0;
+    top: 58%;
+    transform: translate(50%, -50%);
+    line-height: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* —— 小屏收敛：留一支镇纸，其余缩小 —— */
+@media (max-width: 640px) {
+    .markdown-content .banxin-pw-r {
+        display: none;
+    }
+
+    .markdown-content .banxin-pw-l {
+        left: 12px;
+        width: 54px;
+    }
+
+    .markdown-content .banxin-xin {
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+    }
+
+    .markdown-content .banxin-sweep {
+        width: 110px;
+        height: 66px;
+        left: -10px;
+    }
 }

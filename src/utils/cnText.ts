@@ -84,3 +84,12 @@ export function getShichen(date: Date = new Date()): { name: string; line: strin
     const [zi, line] = SHICHEN[idx]
     return { name: `${zi}时`, line }
 }
+
+/** 汉字纪年：2026-10-06 → 「二〇二六年十月」（落款、版心、分享卡共用） */
+export function cnYearMonth(date: Date): string {
+    const cnDigit = (n: number) => '〇一二三四五六七八九'[n]
+    const year = [...String(date.getFullYear())].map((ch) => cnDigit(Number(ch))).join('')
+    const m = date.getMonth() + 1
+    const month = m === 10 ? '十月' : m === 11 ? '十一月' : m === 12 ? '十二月' : `${cnDigit(m)}月`
+    return `${year}年${month}`
+}

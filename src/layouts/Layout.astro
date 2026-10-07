@@ -494,9 +494,11 @@ const photoCoverOn = photoCoverEnabled();
     }
 
     // 1. 先给正文的动态子元素打上入场标记
+    //    .banxin-layer 是文章页雕版界栏的装饰图层（绝对定位+自带居中），
+    //    不能交给 AOS——入场动画会接管 transform，把版心的居中位移动画掉
     const container = document.querySelector('.markdown-content');
     if (container) {
-      const elements = container.querySelectorAll(':scope > *');
+      const elements = container.querySelectorAll(':scope > *:not(.banxin-layer)');
       elements.forEach((el, i) => {
         el.setAttribute('data-aos', 'fade-up');
         el.setAttribute('data-aos-delay', (i % 5 * 50).toString());

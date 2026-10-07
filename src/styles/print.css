@@ -105,6 +105,19 @@
         border: 1px solid #bbb !important;
     }
 
+    /* 雕版界栏的屏幕装饰（朱笔界格/鱼尾/飞白/镇纸/骑缝章）不上纸，
+       打印时退回一圈简单的界线 */
+    .markdown-content.xuan-banxin {
+        border: 1px solid #bbb !important;
+    }
+    .markdown-content .banxin-edge,
+    .markdown-content .banxin-xin,
+    .markdown-content .banxin-sweep,
+    .markdown-content .banxin-zhenzhi,
+    .markdown-content .banxin-qifeng {
+        display: none !important;
+    }
+
     footer a::after {
         content: none !important;
     }

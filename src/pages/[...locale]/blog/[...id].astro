@@ -6,6 +6,8 @@ import Markdown from '@components/misc/Markdown.astro'
 import ImageModule from '@components/misc/ImageModule.astro'
 import FabMenu from '@components/control/FabMenu.astro'
 import SignOff from '@components/SignOff.astro'
+import Seal from '@components/Seal.astro'
+import RelatedPosts from '@components/RelatedPosts.astro'
 import TOC from '@components/TOC.svelte'
 import LicenseCard from '@components/misc/LicenseCard.astro'
 import Comments from '@components/comment/Comments.svelte'
@@ -19,7 +21,7 @@ import { Icon } from "astro-icon/components";
 
 import { blogCoverUrl } from '@utils/urlUtils'
 import { formatFullDate } from '@/utils/time'
-import { cnReadingTime } from '@utils/cnText'
+import { cnReadingTime, cnYearMonth } from '@utils/cnText'
 import { getBlogEntrySort } from '@utils/contentUtils'
 import { getRelativeLocaleUrl } from '@utils/urlUtils';
 import { absoluteUrl, articleJsonLd, coverShareImage, normalizePath } from '@utils/seo';
@@ -44,15 +46,27 @@ export async function getStaticPaths() {
             const next = i > 0 ? blogEntries[i - 1] : null;
             const prev = i < blogEntries.length - 1 ? blogEntries[i + 1] : null;
 
+            // 卷尾同观：同分类优先，凑不满就退回最近更新的；只留可序列化的几个字段
+            const sameCategory = blogEntries.filter(
+                (e) => e.id !== entry.id && e.data.category === entry.data.category
+            );
+            const relatedPool = sameCategory.length > 0 ? sameCategory : blogEntries.filter((e) => e.id !== entry.id);
+            const related = relatedPool.slice(0, 3).map((e) => ({
+                id: e.id,
+                title: e.data.title,
+                pubDate: e.data.pubDate,
+            }));
+
             paths.push({
                 params: {
                     locale: locale === i18n?.defaultLocale ? undefined : locale,
                     id: entry.id
                 },
-                props: { 
+                props: {
                     entry,
                     prev,
-                    next
+                    next,
+                    related
                 }
             });
         }
@@ -60,7 +74,7 @@ export async function getStaticPaths() {
     
     return paths;
 }
-const { entry, prev, next } = Astro.props;
+const { entry, prev, next, related } = Astro.props;
 const { Content, headings } = await render(entry); // 获取渲染后的正文内容
 
 const pageTitle = entry.data.title + ' - ' + siteConfig.title;
@@ -68,8 +82,14 @@ const image = blogCoverUrl(entry.data.image, entry.id);
 
 const { remarkPluginFrontmatter } = await render(entry);
 
+// 版心小字：分类 · 汉字纪年（换算与文末落款共用）
+const banxinXinText = `${entry.data.category || '随笔'} · ${cnYearMonth(entry.data.pubDate)}`
+
 // ---- SEO：分享图（构建期转成 jpg）与文章结构化数据 ----
-const shareImage = await coverShareImage(entry.data.image, entry.id);
+// 分享图：有封面用封面（构建期转 jpg），没有就生成宣纸风分享卡（/og/<id>.png）
+const shareImage = entry.data.image
+    ? await coverShareImage(entry.data.image, entry.id)
+    : absoluteUrl(`/og/${entry.id}.png`);
 const pageUrl = absoluteUrl(normalizePath(Astro.url.pathname));
 const postJsonLd = articleJsonLd({
     title: entry.data.title,
@@ -164,9 +184,48 @@ const postJsonLd = articleJsonLd({
         </div>
         )}
         <Markdown class="mb-8 mt-10 markdown-content xuan-banxin">
+            <Fragment slot="ornament">
+             <div class="banxin-layer" aria-hidden="true">
+                {/* 朱笔界格：四条手绘边，微微起伏，四角出锋交叉——像现打的界格而非印刷线 */}
+                <svg class="banxin-edge banxin-edge-top" viewBox="0 0 1000 22" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M-8 14.2 C150 8.2 330 15.6 500 10.2 C660 6.8 840 14.8 1008 8.6" vector-effect="non-scaling-stroke" />
+                </svg>
+                <svg class="banxin-edge banxin-edge-bottom" viewBox="0 0 1000 22" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M-8 8.6 C180 14.8 360 7.8 540 13.4 C700 16 860 8.2 1008 13.8" vector-effect="non-scaling-stroke" />
+                </svg>
+                <svg class="banxin-edge banxin-edge-left" viewBox="0 0 22 1000" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M13.6 -8 C9 150 15.4 330 10.6 500 C7.6 660 14.6 840 9.8 1008" vector-effect="non-scaling-stroke" />
+                </svg>
+                <svg class="banxin-edge banxin-edge-right" viewBox="0 0 22 1000" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M8.6 -8 C14.8 180 7.8 360 13.4 540 C16 700 8.2 860 13.8 1008" vector-effect="non-scaling-stroke" />
+                </svg>
+
+                {/* 版心：界线在正中收进一对鱼尾，夹着分类与汉字纪年——雕版书的招牌 */}
+                <div class="banxin-xin">
+                    <svg class="banxin-yw-l" viewBox="0 0 20 16" aria-hidden="true"><path d="M0.8 1 C5.5 2.4 14.5 2.4 19.2 1 C15.4 5.6 13.4 9.6 12.8 15 L7.2 15 C6.6 9.6 4.6 5.6 0.8 1 Z" /></svg>
+                    <span>{banxinXinText}</span>
+                    <svg class="banxin-yw-r" viewBox="0 0 20 16" aria-hidden="true"><path d="M0.8 1 C5.5 2.4 14.5 2.4 19.2 1 C15.4 5.6 13.4 9.6 12.8 15 L7.2 15 C6.6 9.6 4.6 5.6 0.8 1 Z" /></svg>
+                </div>
+
+                {/* 飞白：写完这一页，笔锋顺势扫出界外的那一道 */}
+                <svg class="banxin-sweep" viewBox="0 0 150 90" aria-hidden="true">
+                    <path class="banxin-sweep-1" d="M4 78 C34 74 66 62 118 34 C128 29 138 24 146 18 C100 40 60 58 22 72 C15 74.5 9 76.5 4 78 Z" />
+                    <path class="banxin-sweep-2" d="M2 84 C30 82 58 76 96 62 C60 74 28 80 4 84 Z" />
+                    <path class="banxin-sweep-3" d="M24 88 C52 84 86 76 122 58 C90 74 54 82 26 86 Z" />
+                </svg>
+
+                {/* 镇纸一对：把这一页压住 */}
+                <span class="banxin-zhenzhi banxin-pw-l" aria-hidden="true"></span>
+                <span class="banxin-zhenzhi banxin-pw-r" aria-hidden="true"></span>
+
+                {/* 骑缝章：半枚印骑在右界上 */}
+                <span class="banxin-qifeng"><Seal size="1.7rem" rotate={-8} /></span>
+             </div>
+            </Fragment>
             <Content />
         </Markdown>
         <SignOff name={profileConfig.name} date={entry.data.pubDate} />
+        {related && related.length > 0 && <RelatedPosts posts={related} lang={currentLang} />}
         {licenseConfig.enable &&
         <LicenseCard title={entry.data.title} pubDate={entry.data.pubDate}/>
         }

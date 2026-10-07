@@ -13,6 +13,8 @@ interface Props {
 const className = Astro.props.class
 ---
 <div data-pagefind-body class=`markdown-content ${className}`>
+    {/* 具名插槽：雕版界栏等页面级装饰从这里注入，绝对定位在正文之下/之上 */}
+    <slot name="ornament" />
     <slot/>
 </div>
 

@@ -21,9 +21,9 @@ const cnDigit = (n: number) => '〇一二三四五六七八九'[n]
 const year = [...String(date.getFullYear())].map((ch) => cnDigit(Number(ch))).join('')
 const m = date.getMonth() + 1
 const month =
-    m === 10 ? '十' :
-    m === 11 ? '十一' :
-    m === 12 ? '十二' : `${cnDigit(m)}月`
+    m === 10 ? '十月' :
+    m === 11 ? '十一月' :
+    m === 12 ? '十二月' : `${cnDigit(m)}月`
 const dateText = `${year}年${month}`
 ---
 
