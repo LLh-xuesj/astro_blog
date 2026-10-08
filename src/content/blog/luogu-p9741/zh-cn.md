@@ -5,7 +5,7 @@ description: 洛谷 P9741 翻转与反转：n 到 2×10⁶ 暴力必超时，从
 category: 题解
 tags:
   - 数学
-  - 规律
+  - 找规律
 image: "./cover.webp"
 draft: false
 slugId: alg/luogu-p9741
