@@ -41,7 +41,6 @@ const getLocalePath = (path: string, targetLocale: string) => {
 
 const indexPage = getRelativeLocaleUrl(currentLang, "/");
 const archivesPage = getRelativeLocaleUrl(currentLang, "/archives/");
-const tagsPage = getRelativeLocaleUrl(currentLang, "/tags/");
 const murmursPage = getRelativeLocaleUrl(currentLang, "/murmurs/");
 const friendsPage = getRelativeLocaleUrl(currentLang, "/friends/");
 const aboutPage = getRelativeLocaleUrl(currentLang, "/about/");
@@ -161,10 +160,6 @@ if (profileConfig.indexPage) {
           <a href={ archivesPage } data-i18n-path="/archives/" data-i18n-labels={JSON.stringify(i18nLabels("header.archive"))} aria-current={isCurrentPage(archivesPage) ? 'page' : undefined} class={navLinkClass}>
               <span data-i18n-text>{t("header.archive")}</span>
           </a>
-          <!-- 标签链接 -->
-          <a href={ tagsPage } data-i18n-path="/tags/" data-i18n-labels={JSON.stringify(i18nLabels("header.tags"))} aria-current={isCurrentPage(tagsPage) ? 'page' : undefined} class={navLinkClass}>
-              <span data-i18n-text>{t("header.tags")}</span>
-          </a>
           <!-- 碎碎念链接 -->
           <a href={ murmursPage } data-i18n-path="/murmurs/" data-i18n-labels={JSON.stringify(i18nLabels("header.murmurs"))} aria-current={isCurrentPage(murmursPage) ? 'page' : undefined} class={navLinkClass}>
               <span data-i18n-text>{t("header.murmurs")}</span>
@@ -215,10 +210,6 @@ if (profileConfig.indexPage) {
             <a href={ friendsPage } data-i18n-path="/friends/" data-i18n-labels={JSON.stringify(i18nLabels("header.friends"))} class={mobileNavLinkClass(friendsPage)}>
                 <Icon name="fa6-solid:link" class="w-4 h-4 opacity-70" />
                 <span data-i18n-text>{t("header.friends")}</span>
-            </a>
-            <a href={ tagsPage } data-i18n-path="/tags/" data-i18n-labels={JSON.stringify(i18nLabels("header.tags"))} class={mobileNavLinkClass(tagsPage)}>
-                <Icon name="fa6-solid:tags" class="w-4 h-4 opacity-70" />
-                <span data-i18n-text>{t("header.tags")}</span>
             </a>
         </nav>
 

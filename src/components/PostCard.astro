@@ -96,9 +96,9 @@ const showTitleInContent = railText !== entry.data.title;
                     <Icon name="fa6-solid:hashtag" class="mr-1"></Icon>
                     <a href={getRelativeLocaleUrl(currentLang, `/archives/?category=${entry.data.category}`)} class="category-tag">{entry.data.category || t("pagecard.uncategorized")}</a>
                 </p>
-                {/* 标签：卡片底部几枚浅色小签（最多 3 枚，多的折成 +N），点进标签页 */}
+                {/* 标签：卡片底部几枚浅色小签（最多 3 枚，多的折成 +N），点进归档页按标签筛选 */}
                 {(entry.data.tags ?? []).slice(0, 3).map((tag) => (
-                    <a href={getRelativeLocaleUrl(currentLang, `/tags/?tag=${encodeURIComponent(tag)}`)} class="card-tag">{tag}</a>
+                    <a href={getRelativeLocaleUrl(currentLang, `/archives/?tag=${encodeURIComponent(tag)}`)} class="card-tag">{tag}</a>
                 ))}
                 {(entry.data.tags?.length ?? 0) > 3 && (
                     <span class="card-tag-more">+{entry.data.tags.length - 3}</span>
@@ -308,7 +308,7 @@ const showTitleInContent = railText !== entry.data.title;
   text-shadow: 0.5px 0 0 currentColor, -0.5px 0 0 currentColor;
 }
 
-/* 标签小签：比分类更轻的一层，浅纸底 + 细边，点进 /tags 过滤 */
+/* 标签小签：比分类更轻的一层，浅纸底 + 细边，点进归档页按标签筛选 */
 .card-tag {
   font-family: var(--serif);
   font-size: 0.74rem;

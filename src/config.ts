@@ -80,7 +80,6 @@ export const i18nConfig: I18nConfig = {
                     murmurs: "碎碎念",
                     about: "关于",
                     friends: "友链",
-                    tags: "标签",
                 },
                 subTitle: {
                     home: "读过的书，走过的路，想过的事",
@@ -88,7 +87,6 @@ export const i18nConfig: I18nConfig = {
                     murmurs: "一些没长成文章的念头",
                     about: "以宣纸为底，以墨为字",
                     friends: "有趣的灵魂",
-                    tags: "共 {count} 枚标签",
                 }
             }
         },
@@ -100,7 +98,6 @@ export const i18nConfig: I18nConfig = {
                     murmurs: "Murmurs",
                     about: "About",
                     friends: "Friends",
-                    tags: "Tags",
                 },
                 subTitle: {
                     home: "Books read, roads taken, thoughts had",
@@ -108,7 +105,6 @@ export const i18nConfig: I18nConfig = {
                     murmurs: "Thoughts too small for a post",
                     about: "Paper as the ground, ink as the letters",
                     friends: "Interesting Souls",
-                    tags: "{count} tags in all",
                 }
             }
         }
