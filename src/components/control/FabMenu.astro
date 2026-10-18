@@ -307,13 +307,48 @@ tocLinks.forEach(link => {
     };
   }
 
-  // 回到评论区
+  // 回到评论区：Twikoo 的容器是 #twikoo-comment，默认评论组件才是 #comments
   if (backComment) {
     backComment.onclick = () => {
-      const comments = document.getElementById('comments');
-      comments.scrollIntoView({ behavior: 'smooth' });
       container.classList.remove('is-active', 'toc-active');
       isTocOpen = false;
+
+      const target =
+        document.getElementById('twikoo-comment') ||
+        document.getElementById('comments');
+      if (!target) return;
+
+      // 移动端顶栏是 fixed，留出高度；桌面端顶栏在文档流里，留一点呼吸即可
+      const offset = window.innerWidth < 768 ? 76 : 24;
+      const align = () => {
+        const top =
+          target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      };
+
+      align();
+
+      // 评论区是懒加载的：挂载前容器高度为 0，文档不够长，跳转会停在页尾。
+      // 等它长出来（或已挂载过）再对一次位；读者自己滚了就尊重读者。
+      if (target.offsetHeight > 0) return;
+
+      let cancelled = false;
+      let tries = 0;
+      const cancel = () => {
+        cancelled = true;
+      };
+      window.addEventListener('wheel', cancel, { passive: true });
+      window.addEventListener('touchstart', cancel, { passive: true });
+
+      const timer = setInterval(() => {
+        const ready = target.offsetHeight > 0;
+        if (cancelled || !target.isConnected || ready || ++tries > 80) {
+          clearInterval(timer);
+          window.removeEventListener('wheel', cancel);
+          window.removeEventListener('touchstart', cancel);
+          if (ready && !cancelled) align();
+        }
+      }, 100);
     };
   }
 
