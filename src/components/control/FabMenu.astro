@@ -90,8 +90,9 @@ const tocHeadings = headings.filter(h => h.depth > 1 && h.depth < 5);
         <ul class="flex flex-col text-sm space-y-1">
           {tocHeadings.map(h => (
             <li>
-              <a 
-                href={`#${h.slug}`} 
+              <a
+                href={`#${h.slug}`}
+                data-no-swup
                 class="toc-link block py-1.5 px-3 rounded-lg hover:bg-[var(--text-color)]/10 text-[var(--text-color)]/80 hover:text-[var(--text-color)] transition-colors duration-200 line-clamp-2"
                 style={`margin-left: ${(h.depth - 2) * 0.8}rem`}
               >
@@ -228,27 +229,27 @@ function initFabMenu() {
 tocLinks.forEach(link => {
     link.onclick = (e) => {
       e.preventDefault(); // 阻止默认的锚点跳转，以便使用平滑滚动
-      
+
       // 点击即时反馈：移除所有高亮，给当前点击的项加上高亮
       tocLinks.forEach(l => l.classList.remove('is-active'));
       link.classList.add('is-active');
 
       const targetId = link.getAttribute('href').substring(1);
       const targetElement = document.getElementById(targetId);
-      
-      if (targetElement) {
-        // 考虑到可能有顶部导航栏，预留一点偏移量（可选，比如 60px）
-        const offset = 60; 
-        const bodyRect = document.body.getBoundingClientRect().top;
-        const elementRect = targetElement.getBoundingClientRect().top;
-        const elementPosition = elementRect - bodyRect;
-        const offsetPosition = elementPosition - offset;
 
+      if (targetElement) {
+        // 用布局位置（offsetTop 链）而不是 getBoundingClientRect：
+        // rect 会被 AOS 未播放的 translateY(100px) 带偏，落地后动画归位会再错一截。
+        // 落点定在视口 15%（至少 80px，避开 fixed 顶栏），并落在观察器
+        // 10%~30% 激活带内（见下方 rootMargin），点击项的高亮才稳定。
+        let top = 0;
+        for (let node = targetElement; node; node = node.offsetParent) top += node.offsetTop;
+        const offset = Math.max(Math.round(window.innerHeight * 0.15), 80);
         window.scrollTo({
-          top: offsetPosition,
+          top: Math.max(0, top - offset),
           behavior: 'smooth'
         });
-        
+
         // 缩起目录面板
         isTocOpen = false;
         container.classList.remove('toc-active');
@@ -262,10 +263,11 @@ tocLinks.forEach(link => {
     .filter(Boolean); // 过滤掉不存在的元素
 
   if (headingElements.length > 0) {
-    // 设置观察器参数：当标题进入视窗顶部向下 10% 到 20% 的区域时触发
+    // 设置观察器参数：当标题进入视窗顶部向下 10% 到 30% 的区域时触发。
+    // 与目录点击的落点（视口 15%）保持一致，点完高亮才不会漂到上/下一项。
     const observerOptions = {
       root: null,
-      rootMargin: '-10% 0px -80% 0px', 
+      rootMargin: '-10% 0px -70% 0px',
       threshold: 0
     };
 

@@ -132,14 +132,28 @@
 				<li>
 					<a
 						href={`#${heading.slug}`}
+						data-no-swup
 						class:active={i === activeIndex}
 						class="toc-sign"
 						style:padding-left="{0.85 + (heading.depth - minDepth) * 1.1}rem"
 						style={getSpringStyle(i, $focusSpring)}
-						onclick={(e) => {
-							e.preventDefault();
-							document.getElementById(heading.slug)?.scrollIntoView({ behavior: 'smooth' });
-						}}
+					onclick={(e) => {
+						e.preventDefault();
+						const el = document.getElementById(heading.slug);
+						if (!el) return;
+						// 点击瞬间先点亮（观察器要等滚动停下来才回调，长平滑滚动期间高亮会迟到）
+						activeIndex = i;
+						// 用布局位置（offsetTop 链）而不是 getBoundingClientRect/scrollIntoView：
+						// rect 会被 AOS 未播放的 translateY 带偏，落地后动画归位会再错一截。
+						// data-no-swup：不带它的话 swup 的 scroll 插件会抢走这次锚点点击，
+						// 用 scrollTo(0, 元素顶) 瞬移覆盖这里的平滑滚动，落点也变成偏移 0。
+						// 落点定在视口 15%（至少 80px）：落在下方观察器的 10%~30% 激活带内，
+						// 点击项的高亮才稳定，同时避开吸顶书口（fixed 后约 46px）。
+						let top = 0;
+						for (let node = el; node; node = node.offsetParent) top += node.offsetTop;
+						const offset = Math.max(Math.round(window.innerHeight * 0.15), 80);
+						window.scrollTo({ top: Math.max(0, top - offset), behavior: 'smooth' });
+					}}
 					>
 						{heading.text}
 					</a>

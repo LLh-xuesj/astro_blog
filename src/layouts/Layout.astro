@@ -500,6 +500,9 @@ const photoCoverOn = photoCoverEnabled();
     if (container) {
       const elements = container.querySelectorAll(':scope > *:not(.banxin-layer)');
       elements.forEach((el, i) => {
+        // 标题不吃动画：fade-up 播放前带 translateY(100px)，目录/评论跳转都是
+        // 按标题位置对齐的，按这个「假位置」落点会偏 100px，动画归位后又再跳一下
+        if (/^H[1-6]$/.test(el.tagName)) return;
         el.setAttribute('data-aos', 'fade-up');
         el.setAttribute('data-aos-delay', (i % 5 * 50).toString());
       });
