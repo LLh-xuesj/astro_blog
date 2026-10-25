@@ -37,11 +37,39 @@
 	// （点击落点在 15%，恒在线上方，所以点谁亮谁）。
 	const READING_LINE = 0.2;
 	let headingEntries = []; // [{ el, i }]，文档顺序，i 是 filteredHeadings 的下标
-	let tocLockUntil = 0;    // 点击跳转后短锁：平滑滚动期间不更新，落定后由滚动接管
 	let autoScrollTimer = null;
 
+	// 点击跳转的「到点锁」：页面平滑滚动途中，中途每个标题都会经过阅读线，
+	// 跟着算会把纸签列表先拽到目标、又扫回中途、再回到目标（肉眼可见的回滚）。
+	// 所以点击时锁住计算，直到页面滚到目标位置、被用户手动滚动打断、
+	// 或 2.5s 兜底超时，三者任一发生才恢复——整个跳转列表只滚一次。
+	let jumpLock = null;
+
+	function endJumpLock() {
+		if (!jumpLock) return;
+		window.removeEventListener('wheel', jumpLock.cancel);
+		window.removeEventListener('touchstart', jumpLock.cancel);
+		clearTimeout(jumpLock.failsafe);
+		jumpLock = null;
+	}
+
+	function startJumpLock(targetY) {
+		endJumpLock();
+		const cancel = () => endJumpLock(); // 读者自己接管滚动：立即交还计算权
+		jumpLock = {
+			targetY,
+			cancel,
+			failsafe: setTimeout(endJumpLock, 2500),
+		};
+		window.addEventListener('wheel', cancel, { passive: true });
+		window.addEventListener('touchstart', cancel, { passive: true });
+	}
+
 	function computeActive() {
-		if (performance.now() < tocLockUntil) return;
+		if (jumpLock) {
+			if (Math.abs(window.scrollY - jumpLock.targetY) < 2) endJumpLock();
+			else return;
+		}
 		const line = window.innerHeight * READING_LINE;
 		let idx = -1;
 		for (const { el, i } of headingEntries) {
@@ -115,6 +143,7 @@
 		const teardown = () => {
 			window.removeEventListener('scroll', handleScroll);
 			clearTimeout(autoScrollTimer);
+			endJumpLock();
 			document.removeEventListener('astro:before-swap', teardown);
 		};
 		// Astro 换页时兜底解绑（Svelte 卸载时也会再调用一次，重复调用是安全的）
@@ -154,8 +183,7 @@
 						e.preventDefault();
 						const el = document.getElementById(heading.slug);
 						if (!el) return;
-						// 点击瞬间先点亮 + 锁定 900ms：平滑滚动途中不更新高亮（见 computeActive）
-						tocLockUntil = performance.now() + 900;
+						// 点击瞬间先点亮；到点锁见 startJumpLock——列表只滚这一次
 						if (activeIndex !== i) {
 							activeIndex = i;
 							scheduleAutoScroll(i);
@@ -164,12 +192,15 @@
 						// rect 会被 AOS 未播放的 translateY 带偏，落地后动画归位会再错一截。
 						// data-no-swup：不带它的话 swup 的 scroll 插件会抢走这次锚点点击，
 						// 用 scrollTo(0, 元素顶) 瞬移覆盖这里的平滑滚动，落点也变成偏移 0。
-						// 落点定在视口 15%（至少 80px）：落在下方观察器的 10%~30% 激活带内，
-						// 点击项的高亮才稳定，同时避开吸顶书口（fixed 后约 46px）。
+						// 落点定在视口 15%（至少 80px）：在阅读线（20%）上方，落定后
+						// computeActive 算出来的仍是点击项；同时避开吸顶书口（约 46px）。
 						let top = 0;
 						for (let node = el; node; node = node.offsetParent) top += node.offsetTop;
 						const offset = Math.max(Math.round(window.innerHeight * 0.15), 80);
-						window.scrollTo({ top: Math.max(0, top - offset), behavior: 'smooth' });
+						const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+						const targetY = Math.max(0, Math.min(top - offset, maxScroll));
+						startJumpLock(targetY);
+						window.scrollTo({ top: targetY, behavior: 'smooth' });
 					}}
 					>
 						{heading.text}
