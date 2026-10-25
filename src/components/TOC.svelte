@@ -30,28 +30,37 @@
 	let maxDepth = $derived(minDepth + (siteConfig?.toc?.depth || 2));
 	let filteredHeadings = $derived(headings.filter(h => h.depth < maxDepth));
 
-	// 交叉观察器：检测当前阅读章节
-	function initObserver() {
-		const observer = new IntersectionObserver((entries) => {
-			entries.forEach(entry => {
-				if (entry.isIntersecting) {
-					const idx = filteredHeadings.findIndex(h => h.slug === entry.target.id);
-					if (idx !== -1) {
-						activeIndex = idx;
-						autoScrollTOC(idx);
-					}
-				}
-			});
-		}, { rootMargin: '-10% 0px -70% 0px', threshold: 0.1 });
+	// 当前阅读章节：不用 IntersectionObserver。观察器的「激活带」里同时挤进
+	// 两个标题时后到的算数，点击后高亮会被翻到邻居身上；长平滑滚动经过的
+	// 每个标题也都会触发回调，高亮顺扫 + 列表自动滚连成一串闪烁。
+	// 改成确定性的「阅读线」：取视口 20% 高度这条线，线上方最后一个标题即当前节
+	// （点击落点在 15%，恒在线上方，所以点谁亮谁）。
+	const READING_LINE = 0.2;
+	let headingEntries = []; // [{ el, i }]，文档顺序，i 是 filteredHeadings 的下标
+	let tocLockUntil = 0;    // 点击跳转后短锁：平滑滚动期间不更新，落定后由滚动接管
+	let autoScrollTimer = null;
 
-		filteredHeadings.forEach(h => {
-			const el = document.getElementById(h.slug);
-			if (el) observer.observe(el);
-		});
-		return observer;
+	function computeActive() {
+		if (performance.now() < tocLockUntil) return;
+		const line = window.innerHeight * READING_LINE;
+		let idx = -1;
+		for (const { el, i } of headingEntries) {
+			if (el.getBoundingClientRect().top <= line) idx = i;
+			else break;
+		}
+		if (idx !== activeIndex) {
+			activeIndex = idx;
+			scheduleAutoScroll(idx);
+		}
 	}
 
-	// 目录内部自动滚动 
+	// 目录内部自动滚动（防抖：连续换节时只在停顿后滚一次，
+	// 否则平滑滚动互相打断，纸签列表看起来在抖）
+	function scheduleAutoScroll(index) {
+		clearTimeout(autoScrollTimer);
+		autoScrollTimer = setTimeout(() => autoScrollTOC(index), 150);
+	}
+
 	function autoScrollTOC(index) {
 		if (tocListElement) {
 			const items = tocListElement.querySelectorAll('a');
@@ -82,11 +91,16 @@
 		const HIDE_AT = 150;
 		let ticking = false;
 
+		headingEntries = filteredHeadings
+			.map((h, i) => ({ el: document.getElementById(h.slug), i }))
+			.filter((e) => e.el);
+
 		function updateVisibility() {
 			ticking = false;
 			const scrollY = window.scrollY || window.pageYOffset;
 			if (!tocVisible && scrollY > SHOW_AT) tocVisible = true;
 			else if (tocVisible && scrollY < HIDE_AT) tocVisible = false;
+			computeActive();
 		}
 
 		function handleScroll() {
@@ -97,11 +111,10 @@
 
 		window.addEventListener('scroll', handleScroll, { passive: true });
 		updateVisibility();
-		const observer = initObserver();
 
 		const teardown = () => {
 			window.removeEventListener('scroll', handleScroll);
-			observer.disconnect();
+			clearTimeout(autoScrollTimer);
 			document.removeEventListener('astro:before-swap', teardown);
 		};
 		// Astro 换页时兜底解绑（Svelte 卸载时也会再调用一次，重复调用是安全的）
@@ -141,8 +154,12 @@
 						e.preventDefault();
 						const el = document.getElementById(heading.slug);
 						if (!el) return;
-						// 点击瞬间先点亮（观察器要等滚动停下来才回调，长平滑滚动期间高亮会迟到）
-						activeIndex = i;
+						// 点击瞬间先点亮 + 锁定 900ms：平滑滚动途中不更新高亮（见 computeActive）
+						tocLockUntil = performance.now() + 900;
+						if (activeIndex !== i) {
+							activeIndex = i;
+							scheduleAutoScroll(i);
+						}
 						// 用布局位置（offsetTop 链）而不是 getBoundingClientRect/scrollIntoView：
 						// rect 会被 AOS 未播放的 translateY 带偏，落地后动画归位会再错一截。
 						// data-no-swup：不带它的话 swup 的 scroll 插件会抢走这次锚点点击，

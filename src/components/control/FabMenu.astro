@@ -131,6 +131,9 @@ function initFabMenu() {
   const threshold = parseInt(container.dataset.scrollDistance) || 100;
   let isTocOpen = false;
   let scrollPosOnTocOpen = 0;
+  // 目录高亮：滚动驱动的阅读线计算状态（见下方 computeTocActive）
+  let tocLockUntil = 0;
+  let lastTocActiveId = null;
 
   // ---- 滚动处理：rAF 合并 + 缓存文档高度 + 进度条去抖 ----
   let ticking = false;
@@ -177,6 +180,9 @@ function initFabMenu() {
         progressCircle.style.strokeDasharray = `${circumference - offset} ${offset}`;
       }
     }
+
+    // 目录高亮（阅读线计算，见下方 computeTocActive）
+    computeTocActive();
   }
 
   function handleScroll() {
@@ -189,9 +195,6 @@ function initFabMenu() {
     measure();
     handleScroll();
   }
-
-  // 目录高亮观察器（换页时必须断开，否则会持续观察已卸载的标题节点）
-  let tocObserver = null;
 
   // 主按钮切换
   trigger.onclick = (e) => {
@@ -230,9 +233,12 @@ tocLinks.forEach(link => {
     link.onclick = (e) => {
       e.preventDefault(); // 阻止默认的锚点跳转，以便使用平滑滚动
 
-      // 点击即时反馈：移除所有高亮，给当前点击的项加上高亮
+      // 点击即时反馈：移除所有高亮，给当前点击的项加上高亮；
+      // 并锁定 900ms，平滑滚动途中不让滚动驱动的高亮更新扫一遍（见 computeTocActive）
+      tocLockUntil = performance.now() + 900;
       tocLinks.forEach(l => l.classList.remove('is-active'));
       link.classList.add('is-active');
+      lastTocActiveId = link.getAttribute('href').substring(1);
 
       const targetId = link.getAttribute('href').substring(1);
       const targetElement = document.getElementById(targetId);
@@ -240,8 +246,8 @@ tocLinks.forEach(link => {
       if (targetElement) {
         // 用布局位置（offsetTop 链）而不是 getBoundingClientRect：
         // rect 会被 AOS 未播放的 translateY(100px) 带偏，落地后动画归位会再错一截。
-        // 落点定在视口 15%（至少 80px，避开 fixed 顶栏），并落在观察器
-        // 10%~30% 激活带内（见下方 rootMargin），点击项的高亮才稳定。
+        // 落点定在视口 15%（至少 80px，避开 fixed 顶栏），在阅读线（20%）上方，
+        // 落定后 computeTocActive 算出来的仍是点击项。
         let top = 0;
         for (let node = targetElement; node; node = node.offsetParent) top += node.offsetTop;
         const offset = Math.max(Math.round(window.innerHeight * 0.15), 80);
@@ -257,38 +263,26 @@ tocLinks.forEach(link => {
     };
   });
 
-  // 提取所有正文里的标题元素
+  // 提取所有正文里的标题元素（文档顺序）
   const headingElements = Array.from(tocLinks)
     .map(link => document.getElementById(link.getAttribute('href').substring(1)))
     .filter(Boolean); // 过滤掉不存在的元素
 
-  if (headingElements.length > 0) {
-    // 设置观察器参数：当标题进入视窗顶部向下 10% 到 30% 的区域时触发。
-    // 与目录点击的落点（视口 15%）保持一致，点完高亮才不会漂到上/下一项。
-    const observerOptions = {
-      root: null,
-      rootMargin: '-10% 0px -70% 0px',
-      threshold: 0
-    };
-
-    tocObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          // 清除所有高亮
-          tocLinks.forEach(l => l.classList.remove('is-active'));
-          // 找到当前对应的目录链接并高亮
-          const activeId = entry.target.id;
-          const activeLink = document.querySelector(`.toc-link[href="#${activeId}"]`);
-          if (activeLink) {
-            activeLink.classList.add('is-active');
-            // activeLink.scrollIntoView({ block: 'nearest' });
-          }
-        }
-      });
-    }, observerOptions);
-
-    // 开始观察所有标题
-    headingElements.forEach(el => tocObserver.observe(el));
+  // 目录高亮：不用 IntersectionObserver——激活带里挤进两个标题时后到的算数，
+  // 点击后高亮会被翻到邻居身上。改成确定性的「阅读线」：视口 20% 高度这条线，
+  // 线上方最后一个标题即当前节（点击落点 15% 恒在线上方）。
+  function computeTocActive() {
+    if (headingElements.length === 0) return;
+    if (performance.now() < tocLockUntil) return;
+    const line = window.innerHeight * 0.2;
+    let activeId = null;
+    for (const el of headingElements) {
+      if (el.getBoundingClientRect().top <= line) activeId = el.id;
+      else break;
+    }
+    if (activeId === lastTocActiveId) return;
+    lastTocActiveId = activeId;
+    tocLinks.forEach(l => l.classList.toggle('is-active', l.getAttribute('href') === '#' + activeId));
   }
 
   // 回到顶部
@@ -374,8 +368,6 @@ tocLinks.forEach(link => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('click', onDocumentClick);
-      tocObserver?.disconnect();
-      tocObserver = null;
     },
   };
 }
